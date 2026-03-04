@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getCommittenti, createCommittente, updateCommittente, deleteCommittente } from '../utils/api';
 import { useNotify } from '../App';
+import Field from '../components/Field';
 
 const EMPTY = { tipo: 'persona_fisica', nome: '', cognome: '', ragione_sociale: '', codice_fiscale: '', piva: '', indirizzo: '', citta: '', provincia: '', telefono: '', email: '' };
 
@@ -14,7 +15,8 @@ export default function AnagraficaCommittenti() {
   const carica = () => getCommittenti().then(r => setList(r.data)).catch(() => {});
   useEffect(carica, []);
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const set  = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const F    = (props) => <Field {...props} form={form} set={set} />;
 
   const apri = (item = null) => {
     setEditing(item);
@@ -38,13 +40,6 @@ export default function AnagraficaCommittenti() {
     try { await deleteCommittente(id); notify('Eliminato', 'success'); carica(); }
     catch { notify('Errore', 'error'); }
   };
-
-  const F = ({ label, field, type = 'text', req }) => (
-    <div className="form-group">
-      <label className="form-label">{label}{req && <span className="required">*</span>}</label>
-      <input type={type} className="form-control" value={form[field] || ''} onChange={e => set(field, e.target.value)} />
-    </div>
-  );
 
   return (
     <div>

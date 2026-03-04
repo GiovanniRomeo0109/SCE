@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getCoordinatori, createCoordinatore, updateCoordinatore, deleteCoordinatore } from '../utils/api';
 import { useNotify } from '../App';
+import Field from '../components/Field';
 
 const EMPTY = { nome: '', cognome: '', codice_fiscale: '', ordine_professionale: '', numero_ordine: '', provincia_ordine: '', titolo_studio: '', anni_esperienza: '', attestato_corso: '', data_corso: '', data_aggiornamento: '', telefono: '', email: '', pec: '' };
 
@@ -14,7 +15,9 @@ export default function AnagraficaCoordinatori() {
   const carica = () => getCoordinatori().then(r => setList(r.data)).catch(() => {});
   useEffect(carica, []);
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const set  = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const F    = (props) => <Field {...props} form={form} set={set} />;
+
   const apri = (item = null) => { setEditing(item); setForm(item ? { ...item } : EMPTY); setShow(true); };
 
   const salva = async (e) => {
@@ -34,13 +37,6 @@ export default function AnagraficaCoordinatori() {
     catch { notify('Errore', 'error'); }
   };
 
-  const F = ({ label, field, type = 'text' }) => (
-    <div className="form-group">
-      <label className="form-label">{label}</label>
-      <input type={type} className="form-control" value={form[field] || ''} onChange={e => set(field, e.target.value)} />
-    </div>
-  );
-
   return (
     <div>
       <div className="page-header"><h1>📐 Coordinatori CSP / CSE</h1><p>Anagrafica coordinatori persistente</p></div>
@@ -56,12 +52,13 @@ export default function AnagraficaCoordinatori() {
           </div>
           <form onSubmit={salva}>
             <div className="form-grid">
-              <F label="Nome *" field="nome" />
+              <F label="Nome *"    field="nome" />
               <F label="Cognome *" field="cognome" />
               <F label="Codice Fiscale" field="codice_fiscale" />
               <div className="form-group">
                 <label className="form-label">Ordine Professionale</label>
-                <select className="form-control" value={form.ordine_professionale || ''} onChange={e => set('ordine_professionale', e.target.value)}>
+                <select className="form-control" value={form.ordine_professionale || ''}
+                  onChange={e => set('ordine_professionale', e.target.value)}>
                   <option value="">Seleziona...</option>
                   <option>Ordine degli Ingegneri</option>
                   <option>Ordine degli Architetti</option>
@@ -69,16 +66,16 @@ export default function AnagraficaCoordinatori() {
                   <option>Ordine dei Periti Industriali</option>
                 </select>
               </div>
-              <F label="N. Iscrizione Albo" field="numero_ordine" />
-              <F label="Provincia Albo" field="provincia_ordine" />
-              <F label="Titolo di Studio" field="titolo_studio" />
-              <F label="Anni di Esperienza" field="anni_esperienza" type="number" />
-              <F label="Attestato Corso 120h" field="attestato_corso" />
-              <F label="Data Corso" field="data_corso" type="date" />
+              <F label="N. Iscrizione Albo"              field="numero_ordine" />
+              <F label="Provincia Albo"                  field="provincia_ordine" />
+              <F label="Titolo di Studio"                field="titolo_studio" />
+              <F label="Anni di Esperienza"              field="anni_esperienza" type="number" />
+              <F label="Attestato Corso 120h"            field="attestato_corso" />
+              <F label="Data Corso"                      field="data_corso"        type="date" />
               <F label="Data Ultimo Aggiornamento (40h)" field="data_aggiornamento" type="date" />
-              <F label="Telefono" field="telefono" />
-              <F label="Email" field="email" type="email" />
-              <F label="PEC" field="pec" type="email" />
+              <F label="Telefono"                        field="telefono" />
+              <F label="Email"                           field="email"  type="email" />
+              <F label="PEC"                             field="pec"    type="email" />
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
               <button type="button" className="btn btn-ghost" onClick={() => setShow(false)}>Annulla</button>

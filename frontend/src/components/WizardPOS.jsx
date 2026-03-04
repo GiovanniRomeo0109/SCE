@@ -2,48 +2,42 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getImprese, checkObbligatorieta, generaDocumento, generaContenutoAI } from '../utils/api';
 import { useNotify } from '../App';
+import Field from './Field';
 
 const STEPS = ['Verifica', 'Impresa', 'Cantiere', 'Lavoratori', 'Rischi', 'Genera'];
 
+function StepBar({ step, steps }) {
+  return (
+    <div className="wizard-steps">
+      {steps.map((s, i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 0 }}>
+          <div className={`wizard-step ${i === step ? 'active' : i < step ? 'done' : ''}`}>
+            <div className="step-num">{i < step ? '✓' : i + 1}</div>
+            <div className="step-label">{s}</div>
+          </div>
+          {i < steps.length - 1 && <div className={`wizard-divider ${i < step ? 'done' : ''}`} />}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function WizardPOS() {
-  const [step, setStep]   = useState(0);
-  const [form, setForm]   = useState({ tipo_soggetto: 'impresa_esecutrice' });
+  const [step, setStep]               = useState(0);
+  const [form, setForm]               = useState({ tipo_soggetto: 'impresa_esecutrice' });
   const [checkResult, setCheckResult] = useState(null);
-  const [imprese, setImprese] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [docId, setDocId] = useState(null);
+  const [imprese, setImprese]         = useState([]);
+  const [loading, setLoading]         = useState(false);
+  const [docId, setDocId]             = useState(null);
   const notify = useNotify();
-  const nav = useNavigate();
+  const nav    = useNavigate();
 
   useEffect(() => {
     getImprese().then(r => setImprese(r.data)).catch(() => {});
   }, []);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-
-  const F = ({ label, field, type = 'text', placeholder, hint }) => (
-    <div className="form-group">
-      <label className="form-label">{label}</label>
-      {type === 'textarea'
-        ? <textarea className="form-control" rows={3} value={form[field] || ''} placeholder={placeholder} onChange={e => set(field, e.target.value)} />
-        : <input type={type} className="form-control" value={form[field] || ''} placeholder={placeholder} onChange={e => set(field, e.target.value)} />}
-      {hint && <div style={{ fontSize: '0.72rem', color: '#8A9BB0', marginTop: 3 }}>{hint}</div>}
-    </div>
-  );
-
-  const StepBar = () => (
-    <div className="wizard-steps">
-      {STEPS.map((s, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'center', flex: i < STEPS.length - 1 ? 1 : 0 }}>
-          <div className={`wizard-step ${i === step ? 'active' : i < step ? 'done' : ''}`}>
-            <div className="step-num">{i < step ? '✓' : i + 1}</div>
-            <div className="step-label">{s}</div>
-          </div>
-          {i < STEPS.length - 1 && <div className={`wizard-divider ${i < step ? 'done' : ''}`} />}
-        </div>
-      ))}
-    </div>
-  );
+  const F   = (props) => <Field {...props} form={form} set={set} />;
 
   const handleVerifica = async () => {
     setLoading(true);
@@ -55,21 +49,19 @@ export default function WizardPOS() {
       setCheckResult(res.data);
       setStep(1);
     } catch { notify('Errore nella verifica', 'error'); }
-    finally { setLoading(false); }
+    finally   { setLoading(false); }
   };
 
   const loadImpresa = (id) => {
     const imp = imprese.find(x => x.id === parseInt(id));
     if (!imp) return;
-    setForm(f => ({
-      ...f,
+    setForm(f => ({ ...f,
       impresa_ragione_sociale: imp.ragione_sociale,
       impresa_cf:              imp.codice_fiscale,
       impresa_piva:            imp.piva,
       impresa_indirizzo:       imp.indirizzo,
       impresa_citta:           imp.citta,
       impresa_provincia:       imp.provincia,
-      impresa_cap:             imp.cap,
       impresa_telefono:        imp.telefono,
       impresa_email:           imp.email,
       impresa_cciaa:           imp.cciaa,
@@ -98,10 +90,10 @@ export default function WizardPOS() {
       } catch {}
       const res = await generaDocumento({
         tipo_documento: 'pos',
-        form_data: form,
-        contenuto_ai: contenutoAI,
-        nome_cantiere: form.citta_cantiere || 'Cantiere',
-        impresa_nome: form.impresa_ragione_sociale || '',
+        form_data:      form,
+        contenuto_ai:   contenutoAI,
+        nome_cantiere:  form.citta_cantiere || 'Cantiere',
+        impresa_nome:   form.impresa_ragione_sociale || '',
       });
       setDocId(res.data.doc_id);
       setStep(6);
@@ -118,30 +110,28 @@ export default function WizardPOS() {
         <p>Art. 101 — D.Lgs. 81/2008 — Allegato XV punto 3</p>
       </div>
       <div style={{ maxWidth: 820 }}>
-        <StepBar />
+        <StepBar step={step} steps={STEPS} />
         <div className="wizard-body">
 
-          {/* STEP 0 – Verifica */}
           {step === 0 && (
             <>
               <div className="wizard-title">Verifica obbligatorietà POS</div>
               <div className="info-box">
                 Il POS è obbligatorio per ogni <strong>impresa esecutrice</strong>, indipendentemente
                 dal numero di lavoratori o dalla dimensione del cantiere (Art. 101 D.Lgs. 81/2008).
-                I lavoratori autonomi senza dipendenti non sono tenuti a redigere il POS.
               </div>
               <div className="form-group">
                 <label className="form-label">Tipo di soggetto</label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}>
                   {[
-                    { v: 'impresa_esecutrice', l: 'Impresa esecutrice', desc: 'Ha dipendenti o collaboratori — POS obbligatorio' },
-                    { v: 'lavoratore_autonomo', l: 'Lavoratore autonomo (senza dipendenti)', desc: 'Non obbligatorio, ma deve rispettare il PSC' },
+                    { v: 'impresa_esecutrice',   l: 'Impresa esecutrice',                   desc: 'Ha dipendenti o collaboratori — POS obbligatorio' },
+                    { v: 'lavoratore_autonomo',  l: 'Lavoratore autonomo (senza dipendenti)', desc: 'Non obbligatorio, ma deve rispettare il PSC' },
                   ].map(o => (
                     <label key={o.v} style={{
                       display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer',
                       padding: '14px 16px', borderRadius: 8, border: '1.5px solid',
                       borderColor: form.tipo_soggetto === o.v ? '#1A3A5C' : 'var(--border)',
-                      background: form.tipo_soggetto === o.v ? '#EEF4FA' : 'white',
+                      background:  form.tipo_soggetto === o.v ? '#EEF4FA' : 'white',
                     }}>
                       <input type="radio" name="tipo_soggetto" style={{ marginTop: 3 }}
                         checked={form.tipo_soggetto === o.v}
@@ -163,7 +153,6 @@ export default function WizardPOS() {
             </>
           )}
 
-          {/* STEP 1 – Dati Impresa */}
           {step === 1 && (
             <>
               <div className="wizard-title">Dati dell'impresa esecutrice</div>
@@ -171,9 +160,7 @@ export default function WizardPOS() {
                 <div className={checkResult.obbligatorio ? 'info-box' : 'warn-box'} style={{ marginBottom: 20 }}>
                   <strong>{checkResult.obbligatorio ? '✅ POS OBBLIGATORIO' : '⚠️ POS non obbligatorio'}</strong>
                   {' — '}{checkResult.motivazioni?.join('; ')}
-                  {checkResult.avvertenze?.length > 0 && (
-                    <div style={{ fontSize: '0.75rem', marginTop: 4 }}>{checkResult.avvertenze[0]}</div>
-                  )}
+                  {checkResult.avvertenze?.length > 0 && <div style={{ fontSize: '0.75rem', marginTop: 4 }}>{checkResult.avvertenze[0]}</div>}
                 </div>
               )}
               {imprese.length > 0 && (
@@ -187,20 +174,21 @@ export default function WizardPOS() {
               )}
               <div className="section-divider">Dati societari</div>
               <div className="form-grid">
-                <F label="Ragione Sociale" field="impresa_ragione_sociale" />
-                <F label="P.IVA" field="impresa_piva" />
-                <F label="Codice Fiscale" field="impresa_cf" />
-                <F label="Sede legale" field="impresa_indirizzo" />
-                <F label="Città" field="impresa_citta" />
-                <F label="Provincia" field="impresa_provincia" placeholder="es. MI" />
-                <F label="Telefono" field="impresa_telefono" />
-                <F label="Email / PEC" field="impresa_email" />
-                <F label="CCIAA" field="impresa_cciaa" />
-                <F label="Posizione INAIL (PAT)" field="impresa_inail_pat" />
+                <F label="Ragione Sociale"       field="impresa_ragione_sociale" />
+                <F label="P.IVA"                 field="impresa_piva" />
+                <F label="Codice Fiscale"         field="impresa_cf" />
+                <F label="Sede legale"            field="impresa_indirizzo" />
+                <F label="Città"                  field="impresa_citta" />
+                <F label="Provincia"              field="impresa_provincia" placeholder="es. MI" />
+                <F label="Telefono"               field="impresa_telefono" />
+                <F label="Email / PEC"            field="impresa_email" />
+                <F label="CCIAA"                  field="impresa_cciaa" />
+                <F label="Posizione INAIL (PAT)"  field="impresa_inail_pat" />
               </div>
               <div className="form-group">
                 <label className="form-label">CCNL applicato</label>
-                <select className="form-control" value={form.impresa_ccnl || 'CCNL Edilizia Industria'} onChange={e => set('impresa_ccnl', e.target.value)}>
+                <select className="form-control" value={form.impresa_ccnl || 'CCNL Edilizia Industria'}
+                  onChange={e => set('impresa_ccnl', e.target.value)}>
                   <option>CCNL Edilizia Industria</option>
                   <option>CCNL Edilizia Artigianato</option>
                   <option>CCNL Edilizia Cooperazione</option>
@@ -209,14 +197,14 @@ export default function WizardPOS() {
               </div>
               <div className="section-divider">Figure della sicurezza</div>
               <div className="form-grid">
-                <F label="Nome Datore di Lavoro" field="nome_dl" />
-                <F label="Cognome Datore di Lavoro" field="cognome_dl" />
-                <F label="Nome RSPP" field="nome_rspp" />
-                <F label="Cognome RSPP" field="cognome_rspp" />
-                <F label="Nome Medico Competente" field="nome_mc" />
-                <F label="Cognome Medico Competente" field="cognome_mc" />
-                <F label="Nome RLS / RLST" field="nome_rls" />
-                <F label="Cognome RLS / RLST" field="cognome_rls" />
+                <F label="Nome Datore di Lavoro"      field="nome_dl" />
+                <F label="Cognome Datore di Lavoro"   field="cognome_dl" />
+                <F label="Nome RSPP"                  field="nome_rspp" />
+                <F label="Cognome RSPP"               field="cognome_rspp" />
+                <F label="Nome Medico Competente"      field="nome_mc" />
+                <F label="Cognome Medico Competente"   field="cognome_mc" />
+                <F label="Nome RLS / RLST"             field="nome_rls" />
+                <F label="Cognome RLS / RLST"          field="cognome_rls" />
                 <F label="Preposto di cantiere (Nome)" field="nome_preposto" />
                 <F label="Preposto di cantiere (Cognome)" field="cognome_preposto" />
               </div>
@@ -227,23 +215,22 @@ export default function WizardPOS() {
             </>
           )}
 
-          {/* STEP 2 – Dati Cantiere */}
           {step === 2 && (
             <>
               <div className="wizard-title">Attività nel cantiere</div>
               <div className="form-grid">
                 <F label="Indirizzo cantiere" field="indirizzo_cantiere" />
-                <F label="Comune" field="citta_cantiere" />
+                <F label="Comune"             field="citta_cantiere" />
               </div>
               <F label="Attività svolta dall'impresa nel cantiere" field="attivita_cantiere"
-                type="textarea" placeholder="es. Opere murarie, intonaci, pavimentazioni, opere in c.a. ..." />
+                 type="textarea" placeholder="es. Opere murarie, intonaci, pavimentazioni..." />
               <F label="Fasi di lavoro proprie dell'impresa" field="fasi_proprie"
-                type="textarea" placeholder="es. Fase 1: fondazioni (sett-ott), Fase 2: elevazione (nov-gen)..." />
+                 type="textarea" placeholder="es. Fase 1: fondazioni (sett-ott), Fase 2: elevazione (nov-gen)..." />
               <div className="form-grid">
-                <F label="Periodo di intervento" field="periodo_intervento" placeholder="es. Settembre 2025 — Marzo 2026" />
-                <F label="N. lavoratori impiegati" field="num_lavoratori" type="number" placeholder="es. 5" />
-                <F label="Addetto Primo Soccorso" field="addetto_ps" />
-                <F label="Addetto Antincendio" field="addetto_ai" />
+                <F label="Periodo di intervento"    field="periodo_intervento" placeholder="es. Settembre 2025 — Marzo 2026" />
+                <F label="N. lavoratori impiegati"  field="num_lavoratori" type="number" placeholder="es. 5" />
+                <F label="Addetto Primo Soccorso"   field="addetto_ps" />
+                <F label="Addetto Antincendio"      field="addetto_ai" />
                 <F label="Ospedale / PS più vicino" field="ospedale_vicino" />
               </div>
               <div className="wizard-nav">
@@ -253,7 +240,6 @@ export default function WizardPOS() {
             </>
           )}
 
-          {/* STEP 3 – Lavoratori e Formazione */}
           {step === 3 && (
             <>
               <div className="wizard-title">Lavoratori e formazione</div>
@@ -265,14 +251,14 @@ export default function WizardPOS() {
                 <label className="form-label">Formazione completata dai lavoratori</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
                   {[
-                    ['form_generale', 'Formazione generale (4h)'],
+                    ['form_generale',  'Formazione generale (4h)'],
                     ['form_specifica', 'Formazione specifica alto rischio (12h)'],
-                    ['form_ps', 'Primo soccorso (12h o 16h)'],
-                    ['form_ai', 'Antincendio (4h o 8h)'],
-                    ['form_quota', 'Lavori in quota'],
-                    ['form_ponteggi', 'Montaggio ponteggi (PIMUS)'],
-                    ['form_gru', 'Operatore gru'],
-                    ['form_macchine', 'Patentino macchine movimento terra'],
+                    ['form_ps',        'Primo soccorso (12h o 16h)'],
+                    ['form_ai',        'Antincendio (4h o 8h)'],
+                    ['form_quota',     'Lavori in quota'],
+                    ['form_ponteggi',  'Montaggio ponteggi (PIMUS)'],
+                    ['form_gru',       'Operatore gru'],
+                    ['form_macchine',  'Patentino macchine movimento terra'],
                   ].map(([field, label]) => (
                     <label key={field} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.875rem', cursor: 'pointer' }}>
                       <input type="checkbox" checked={!!form[field]} onChange={e => set(field, e.target.checked)} />
@@ -284,16 +270,16 @@ export default function WizardPOS() {
               <div className="section-divider">Macchine e attrezzature</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
                 {[
-                  ['att_betoniera', 'Betoniera'],
-                  ['att_sega', 'Sega circolare'],
-                  ['att_flex', 'Smerigliatrice (flex)'],
-                  ['att_trapano', 'Trapano a percussione'],
-                  ['att_ponteggio', 'Ponteggio metallico'],
+                  ['att_betoniera',   'Betoniera'],
+                  ['att_sega',        'Sega circolare'],
+                  ['att_flex',        'Smerigliatrice (flex)'],
+                  ['att_trapano',     'Trapano a percussione'],
+                  ['att_ponteggio',   'Ponteggio metallico'],
                   ['att_trabattello', 'Trabattello'],
-                  ['att_gru', 'Gru a torre'],
-                  ['att_escavatore', 'Escavatore'],
+                  ['att_gru',         'Gru a torre'],
+                  ['att_escavatore',  'Escavatore'],
                   ['att_compressore', 'Compressore'],
-                  ['att_saldatrice', 'Saldatrice'],
+                  ['att_saldatrice',  'Saldatrice'],
                 ].map(([field, label]) => (
                   <label key={field} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.875rem', cursor: 'pointer' }}>
                     <input type="checkbox" checked={!!form[field]} onChange={e => set(field, e.target.checked)} />
@@ -301,7 +287,7 @@ export default function WizardPOS() {
                   </label>
                 ))}
               </div>
-              <F label="Altre attrezzature" field="altre_attrezzature" placeholder="es. Fresa, Laser di livello, ..." />
+              <F label="Altre attrezzature" field="altre_attrezzature" placeholder="es. Fresa, Laser di livello..." />
               <div className="wizard-nav">
                 <button className="btn btn-ghost" onClick={() => setStep(2)}>← Indietro</button>
                 <button className="btn btn-primary" onClick={() => setStep(4)}>Avanti →</button>
@@ -309,7 +295,6 @@ export default function WizardPOS() {
             </>
           )}
 
-          {/* STEP 4 – Rischi e DPI */}
           {step === 4 && (
             <>
               <div className="wizard-title">Rischi specifici e DPI</div>
@@ -335,24 +320,19 @@ export default function WizardPOS() {
                   ))}
                 </div>
               </div>
-              <div className="form-group" style={{ marginTop: 8 }}>
-                <label className="form-label">Misure di prevenzione adottate</label>
-                <textarea className="form-control" rows={3}
-                  value={form.misure_prevenzione || ''}
-                  placeholder="es. Parapetti anticaduta, imbragature, quadri elettrici CEI, rotazione mansioni, aspiratori polveri..."
-                  onChange={e => set('misure_prevenzione', e.target.value)} />
-              </div>
+              <F label="Misure di prevenzione adottate" field="misure_prevenzione" type="textarea"
+                 placeholder="es. Parapetti anticaduta, imbragature, quadri elettrici CEI, aspiratori polveri..." />
               <div className="section-divider">DPI previsti</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {[
-                  ['dpi_casco',     'Casco EN 397 — sempre in cantiere'],
-                  ['dpi_scarpe',    'Scarpe S3 EN ISO 20345 — sempre'],
-                  ['dpi_guanti',    'Guanti EN 420 — durante lavorazioni'],
-                  ['dpi_occhiali',  'Occhiali EN 166 — taglio, molatura'],
-                  ['dpi_cuffie',    'Cuffie EN 352 — se rumore > 80 dB'],
-                  ['dpi_maschere',  'Maschera FFP2/FFP3 — polveri, agenti chimici'],
-                  ['dpi_gilet',     'Gilet EN ISO 20471 — lavori stradali'],
-                  ['dpi_imbragatura','Imbragatura EN 361 — lavori in quota >2m'],
+                  ['dpi_casco',       'Casco EN 397 — sempre in cantiere'],
+                  ['dpi_scarpe',      'Scarpe S3 EN ISO 20345 — sempre'],
+                  ['dpi_guanti',      'Guanti EN 420 — durante lavorazioni'],
+                  ['dpi_occhiali',    'Occhiali EN 166 — taglio, molatura'],
+                  ['dpi_cuffie',      'Cuffie EN 352 — se rumore > 80 dB'],
+                  ['dpi_maschere',    'Maschera FFP2/FFP3 — polveri, agenti chimici'],
+                  ['dpi_gilet',       'Gilet EN ISO 20471 — lavori stradali'],
+                  ['dpi_imbragatura', 'Imbragatura EN 361 — lavori in quota >2m'],
                 ].map(([field, label]) => (
                   <label key={field} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.875rem', cursor: 'pointer' }}>
                     <input type="checkbox" checked={!!form[field]} onChange={e => set(field, e.target.checked)} />
@@ -367,20 +347,19 @@ export default function WizardPOS() {
             </>
           )}
 
-          {/* STEP 5 – Riepilogo + Genera */}
           {step === 5 && (
             <>
               <div className="wizard-title">Genera POS</div>
               <div style={{ background: '#F8F5F0', borderRadius: 8, padding: 20, fontSize: '0.875rem', marginBottom: 20 }}>
                 <div style={{ fontWeight: 600, color: '#1A3A5C', marginBottom: 10 }}>Riepilogo</div>
                 {[
-                  ['Impresa',       form.impresa_ragione_sociale],
-                  ['P.IVA',         form.impresa_piva],
-                  ['Datore Lavoro', `${form.nome_dl || ''} ${form.cognome_dl || ''}`],
-                  ['RSPP',          `${form.nome_rspp || ''} ${form.cognome_rspp || ''}`],
-                  ['Cantiere',      `${form.indirizzo_cantiere || ''}, ${form.citta_cantiere || ''}`],
-                  ['Attività',      form.attivita_cantiere],
-                  ['Lavoratori',    form.num_lavoratori],
+                  ['Impresa',        form.impresa_ragione_sociale],
+                  ['P.IVA',          form.impresa_piva],
+                  ['Datore Lavoro',  `${form.nome_dl || ''} ${form.cognome_dl || ''}`],
+                  ['RSPP',           `${form.nome_rspp || ''} ${form.cognome_rspp || ''}`],
+                  ['Cantiere',       `${form.indirizzo_cantiere || ''}, ${form.citta_cantiere || ''}`],
+                  ['Attività',       form.attivita_cantiere],
+                  ['Lavoratori',     form.num_lavoratori],
                 ].map(([k, v]) => v && (
                   <div key={k} style={{ display: 'flex', gap: 12, marginBottom: 4 }}>
                     <span style={{ color: '#8A9BB0', minWidth: 110 }}>{k}:</span>
@@ -389,8 +368,7 @@ export default function WizardPOS() {
                 ))}
               </div>
               <p style={{ fontSize: '0.82rem', color: '#5A6B7D', marginBottom: 20 }}>
-                L'AI genererà le sezioni narrative (valutazione rischi specifica, procedure operative, gestione emergenze)
-                conformi all'Allegato XV punto 3.
+                L'AI genererà le sezioni narrative conformi all'Allegato XV punto 3.
               </p>
               <div className="wizard-nav">
                 <button className="btn btn-ghost" onClick={() => setStep(4)}>← Indietro</button>
@@ -401,20 +379,16 @@ export default function WizardPOS() {
             </>
           )}
 
-          {/* STEP 6 – Successo */}
           {step === 6 && (
             <div style={{ textAlign: 'center', padding: '32px 0' }}>
               <div style={{ fontSize: '3rem', marginBottom: 16 }}>📘</div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#1A3A5C', marginBottom: 8 }}>
-                POS Generato!
-              </div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#1A3A5C', marginBottom: 8 }}>POS Generato!</div>
               <p style={{ color: '#5A6B7D', marginBottom: 24, maxWidth: 460, margin: '0 auto 24px' }}>
-                Il Piano Operativo di Sicurezza è stato generato con contenuto AI-assistito conforme all'Allegato XV.
                 Fallo firmare dal Datore di Lavoro prima di consegnarlo al CSE.
               </p>
               {docId && (
                 <a href={`/api/documents/download/${docId}`} className="btn btn-gold" download
-                  style={{ fontSize: '1rem', padding: '12px 28px' }}>
+                   style={{ fontSize: '1rem', padding: '12px 28px' }}>
                   ↓ Scarica POS in DOCX
                 </a>
               )}
