@@ -28,3 +28,9 @@ export const generaDocumento = (d) => api.post('/documents/genera', d);
 export const getStorico      = () => api.get('/documents/storico');
 export const deleteDocumento = (id) => api.delete(`/documents/storico/${id}`);
 export const getDownloadUrl  = (id) => `/api/documents/download/${id}`;
+// ── ESTRAZIONE AI ─────────────────────────────────────────
+export const estraiDati = (formData) =>
+  api.post('/estrazione/analizza', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 120000, // 2 minuti — analisi può essere lenta
+  });

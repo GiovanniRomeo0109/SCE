@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';   // ← aggiungi useLocation
 import { useNavigate } from 'react-router-dom';
 import { getImprese, checkObbligatorieta, generaDocumento, generaContenutoAI } from '../utils/api';
 import { useNotify } from '../App';
@@ -23,8 +24,11 @@ function StepBar({ step, steps }) {
 }
 
 export default function WizardPOS() {
-  const [step, setStep]               = useState(0);
-  const [form, setForm]               = useState({ tipo_soggetto: 'impresa_esecutrice' });
+  const location    = useLocation();                                        // ← NUOVO
+  const initialData = location.state?.initialData || {};                   // ← NUOVO
+
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useState({ tipo_soggetto: 'impresa_esecutrice', ...initialData }); // ← modifica
   const [checkResult, setCheckResult] = useState(null);
   const [imprese, setImprese]         = useState([]);
   const [loading, setLoading]         = useState(false);

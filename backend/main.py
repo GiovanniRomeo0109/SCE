@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db
 from routers import anagrafica, documents, agent
+from routers import estrazione
 
 app = FastAPI(
     title="SafetyDocs API — Sicurezza Cantieri Edili",
@@ -30,6 +31,7 @@ async def startup_event():
 app.include_router(anagrafica.router, prefix="/api/anagrafica", tags=["Anagrafica"])
 app.include_router(documents.router,  prefix="/api/documents",  tags=["Documenti"])
 app.include_router(agent.router,      prefix="/api/agent",      tags=["Agente AI"])
+app.include_router(estrazione.router)
 
 
 @app.get("/", tags=["Health"])

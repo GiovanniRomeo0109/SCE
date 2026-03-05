@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';   // ← aggiungi useLocation
 import { getCommittenti, getCoordinatori, checkObbligatorieta, generaDocumento } from '../utils/api';
 import { useNotify } from '../App';
 import Field from './Field';
 
 const STEPS = ['Verifica', 'Cantiere', 'Committente', 'Coordinatori', 'Genera'];
-
 function StepBar({ step, steps }) {
   return (
     <div className="wizard-steps">
@@ -23,8 +22,10 @@ function StepBar({ step, steps }) {
 }
 
 export default function WizardNotifica() {
+  const location   = useLocation();                                         // ← NUOVO
+  const initialData = location.state?.initialData || {};                    // ← NUOVO
   const [step, setStep]           = useState(0);
-  const [form, setForm]           = useState({ rischi_allegato_xi: false });
+  const [form, setForm]           = useState({ rischi_allegato_xi: false, ...initialData }); // ← modific
   const [checkResult, setCheckResult] = useState(null);
   const [committenti, setCommittenti] = useState([]);
   const [coordinatori, setCoordinatori] = useState([]);

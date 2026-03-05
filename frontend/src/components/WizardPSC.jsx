@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';   // ← aggiungi useLocation
 import { useNavigate } from 'react-router-dom';
 import { getCommittenti, getCoordinatori, getImprese, checkObbligatorieta, generaDocumento, generaContenutoAI } from '../utils/api';
 import { useNotify } from '../App';
@@ -23,8 +24,12 @@ function StepBar({ step, steps }) {
 }
 
 export default function WizardPSC() {
-  const [step, setStep]               = useState(0);
-  const [form, setForm]               = useState({});
+  const location    = useLocation();                                        // ← NUOVO
+  const initialData = location.state?.initialData || {};                   // ← NUOVO
+
+  const [step, setStep]  = useState(0);
+  const [form, setForm]  = useState({ ...initialData });                   // ← modifica
+ 
   const [checkResult, setCheckResult] = useState(null);
   const [impreseSel, setImpreseSel]   = useState([]);
   const [committenti, setCommittenti] = useState([]);
