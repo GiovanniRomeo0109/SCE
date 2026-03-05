@@ -12,11 +12,13 @@ export default function AnagraficaImprese() {
   const [showForm, setShow]   = useState(false);
   const notify = useNotify();
 
-  const carica = () => getImprese().then(r => setList(r.data)).catch(() => {});
-  useEffect(carica, []);
+  const carica = () => {
+    getImprese().then(r => setList(r.data)).catch(() => {});
+  };
 
-  const set  = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const F    = (props) => <Field {...props} form={form} set={set} />;
+  useEffect(() => { carica(); }, []);
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const apri = (item = null) => { setEditing(item); setForm(item ? { ...item } : EMPTY); setShow(true); };
 
@@ -53,18 +55,18 @@ export default function AnagraficaImprese() {
           <form onSubmit={salva}>
             <div className="section-divider">Dati societari</div>
             <div className="form-grid">
-              <F label="Ragione Sociale *" field="ragione_sociale" />
-              <F label="P.IVA *"           field="piva" />
-              <F label="Codice Fiscale"    field="codice_fiscale" />
-              <F label="Indirizzo Sede"    field="indirizzo" />
-              <F label="Città"             field="citta" />
-              <F label="Provincia"         field="provincia" />
-              <F label="Telefono"          field="telefono" />
-              <F label="Email / PEC"       field="email" type="email" />
-              <F label="CCIAA"             field="cciaa" />
-              <F label="N. iscrizione CCIAA" field="numero_cciaa" />
-              <F label="Posizione INAIL (PAT)" field="inail_pat" />
-              <F label="Cassa Edile"       field="cassa_edile" />
+              <Field form={form} set={set} label="Ragione Sociale *" field="ragione_sociale" />
+              <Field form={form} set={set} label="P.IVA *"           field="piva" />
+              <Field form={form} set={set} label="Codice Fiscale"    field="codice_fiscale" />
+              <Field form={form} set={set} label="Indirizzo Sede"    field="indirizzo" />
+              <Field form={form} set={set} label="Città"             field="citta" />
+              <Field form={form} set={set} label="Provincia"         field="provincia" />
+              <Field form={form} set={set} label="Telefono"          field="telefono" />
+              <Field form={form} set={set} label="Email / PEC"       field="email" type="email" />
+              <Field form={form} set={set} label="CCIAA"             field="cciaa" />
+              <Field form={form} set={set} label="N. iscrizione CCIAA"   field="numero_cciaa" />
+              <Field form={form} set={set} label="Posizione INAIL (PAT)" field="inail_pat" />
+              <Field form={form} set={set} label="Cassa Edile"       field="cassa_edile" />
             </div>
             <div className="form-group">
               <label className="form-label">CCNL applicato</label>
@@ -77,14 +79,14 @@ export default function AnagraficaImprese() {
             </div>
             <div className="section-divider">Figure della sicurezza</div>
             <div className="form-grid">
-              <F label="Nome Datore di Lavoro"     field="nome_dl" />
-              <F label="Cognome Datore di Lavoro"  field="cognome_dl" />
-              <F label="Nome RSPP"                 field="nome_rspp" />
-              <F label="Cognome RSPP"              field="cognome_rspp" />
-              <F label="Nome Medico Competente"    field="nome_mc" />
-              <F label="Cognome Medico Competente" field="cognome_mc" />
-              <F label="Nome RLS / RLST"           field="nome_rls" />
-              <F label="Cognome RLS / RLST"        field="cognome_rls" />
+              <Field form={form} set={set} label="Nome Datore di Lavoro"     field="nome_dl" />
+              <Field form={form} set={set} label="Cognome Datore di Lavoro"  field="cognome_dl" />
+              <Field form={form} set={set} label="Nome RSPP"                 field="nome_rspp" />
+              <Field form={form} set={set} label="Cognome RSPP"              field="cognome_rspp" />
+              <Field form={form} set={set} label="Nome Medico Competente"    field="nome_mc" />
+              <Field form={form} set={set} label="Cognome Medico Competente" field="cognome_mc" />
+              <Field form={form} set={set} label="Nome RLS / RLST"           field="nome_rls" />
+              <Field form={form} set={set} label="Cognome RLS / RLST"        field="cognome_rls" />
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
               <button type="button" className="btn btn-ghost" onClick={() => setShow(false)}>Annulla</button>

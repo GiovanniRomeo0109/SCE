@@ -37,7 +37,7 @@ export default function WizardPOS() {
   }, []);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const F   = (props) => <Field {...props} form={form} set={set} />;
+  
 
   const handleVerifica = async () => {
     setLoading(true);
@@ -174,16 +174,16 @@ export default function WizardPOS() {
               )}
               <div className="section-divider">Dati societari</div>
               <div className="form-grid">
-                <F label="Ragione Sociale"       field="impresa_ragione_sociale" />
-                <F label="P.IVA"                 field="impresa_piva" />
-                <F label="Codice Fiscale"         field="impresa_cf" />
-                <F label="Sede legale"            field="impresa_indirizzo" />
-                <F label="Città"                  field="impresa_citta" />
-                <F label="Provincia"              field="impresa_provincia" placeholder="es. MI" />
-                <F label="Telefono"               field="impresa_telefono" />
-                <F label="Email / PEC"            field="impresa_email" />
-                <F label="CCIAA"                  field="impresa_cciaa" />
-                <F label="Posizione INAIL (PAT)"  field="impresa_inail_pat" />
+                <Field form={form} set={set} label="Ragione Sociale"       field="impresa_ragione_sociale" />
+                <Field form={form} set={set} label="P.IVA"                 field="impresa_piva" />
+                <Field form={form} set={set} label="Codice Fiscale"         field="impresa_cf" />
+                <Field form={form} set={set} label="Sede legale"            field="impresa_indirizzo" />
+                <Field form={form} set={set} label="Città"                  field="impresa_citta" />
+                <Field form={form} set={set} label="Provincia"              field="impresa_provincia" placeholder="es. MI" />
+                <Field form={form} set={set} label="Telefono"               field="impresa_telefono" />
+                <Field form={form} set={set} label="Email / PEC"            field="impresa_email" />
+                <Field form={form} set={set} label="CCIAA"                  field="impresa_cciaa" />
+                <Field form={form} set={set} label="Posizione INAIL (PAT)"  field="impresa_inail_pat" />
               </div>
               <div className="form-group">
                 <label className="form-label">CCNL applicato</label>
@@ -197,16 +197,16 @@ export default function WizardPOS() {
               </div>
               <div className="section-divider">Figure della sicurezza</div>
               <div className="form-grid">
-                <F label="Nome Datore di Lavoro"      field="nome_dl" />
-                <F label="Cognome Datore di Lavoro"   field="cognome_dl" />
-                <F label="Nome RSPP"                  field="nome_rspp" />
-                <F label="Cognome RSPP"               field="cognome_rspp" />
-                <F label="Nome Medico Competente"      field="nome_mc" />
-                <F label="Cognome Medico Competente"   field="cognome_mc" />
-                <F label="Nome RLS / RLST"             field="nome_rls" />
-                <F label="Cognome RLS / RLST"          field="cognome_rls" />
-                <F label="Preposto di cantiere (Nome)" field="nome_preposto" />
-                <F label="Preposto di cantiere (Cognome)" field="cognome_preposto" />
+                <Field form={form} set={set} label="Nome Datore di Lavoro"      field="nome_dl" />
+                <Field form={form} set={set} label="Cognome Datore di Lavoro"   field="cognome_dl" />
+                <Field form={form} set={set} label="Nome RSPP"                  field="nome_rspp" />
+                <Field form={form} set={set} label="Cognome RSPP"               field="cognome_rspp" />
+                <Field form={form} set={set} label="Nome Medico Competente"      field="nome_mc" />
+                <Field form={form} set={set} label="Cognome Medico Competente"   field="cognome_mc" />
+                <Field form={form} set={set} label="Nome RLS / RLST"             field="nome_rls" />
+                <Field form={form} set={set} label="Cognome RLS / RLST"          field="cognome_rls" />
+                <Field form={form} set={set} label="Preposto di cantiere (Nome)" field="nome_preposto" />
+                <Field form={form} set={set} label="Preposto di cantiere (Cognome)" field="cognome_preposto" />
               </div>
               <div className="wizard-nav">
                 <button className="btn btn-ghost" onClick={() => setStep(0)}>← Indietro</button>
@@ -219,19 +219,19 @@ export default function WizardPOS() {
             <>
               <div className="wizard-title">Attività nel cantiere</div>
               <div className="form-grid">
-                <F label="Indirizzo cantiere" field="indirizzo_cantiere" />
-                <F label="Comune"             field="citta_cantiere" />
+                <Field form={form} set={set} label="Indirizzo cantiere" field="indirizzo_cantiere" />
+                <Field form={form} set={set} label="Comune"             field="citta_cantiere" />
               </div>
-              <F label="Attività svolta dall'impresa nel cantiere" field="attivita_cantiere"
+              <Field form={form} set={set} label="Attività svolta dall'impresa nel cantiere" field="attivita_cantiere"
                  type="textarea" placeholder="es. Opere murarie, intonaci, pavimentazioni..." />
-              <F label="Fasi di lavoro proprie dell'impresa" field="fasi_proprie"
+              <Field form={form} set={set} label="Fasi di lavoro proprie dell'impresa" field="fasi_proprie"
                  type="textarea" placeholder="es. Fase 1: fondazioni (sett-ott), Fase 2: elevazione (nov-gen)..." />
               <div className="form-grid">
-                <F label="Periodo di intervento"    field="periodo_intervento" placeholder="es. Settembre 2025 — Marzo 2026" />
-                <F label="N. lavoratori impiegati"  field="num_lavoratori" type="number" placeholder="es. 5" />
-                <F label="Addetto Primo Soccorso"   field="addetto_ps" />
-                <F label="Addetto Antincendio"      field="addetto_ai" />
-                <F label="Ospedale / PS più vicino" field="ospedale_vicino" />
+                <Field form={form} set={set} label="Periodo di intervento"    field="periodo_intervento" placeholder="es. Settembre 2025 — Marzo 2026" />
+                <Field form={form} set={set} label="N. lavoratori impiegati"  field="num_lavoratori" type="number" placeholder="es. 5" />
+                <Field form={form} set={set} label="Addetto Primo Soccorso"   field="addetto_ps" />
+                <Field form={form} set={set} label="Addetto Antincendio"      field="addetto_ai" />
+                <Field form={form} set={set} label="Ospedale / PS più vicino" field="ospedale_vicino" />
               </div>
               <div className="wizard-nav">
                 <button className="btn btn-ghost" onClick={() => setStep(1)}>← Indietro</button>
@@ -287,7 +287,7 @@ export default function WizardPOS() {
                   </label>
                 ))}
               </div>
-              <F label="Altre attrezzature" field="altre_attrezzature" placeholder="es. Fresa, Laser di livello..." />
+              <Field form={form} set={set} label="Altre attrezzature" field="altre_attrezzature" placeholder="es. Fresa, Laser di livello..." />
               <div className="wizard-nav">
                 <button className="btn btn-ghost" onClick={() => setStep(2)}>← Indietro</button>
                 <button className="btn btn-primary" onClick={() => setStep(4)}>Avanti →</button>
@@ -320,7 +320,7 @@ export default function WizardPOS() {
                   ))}
                 </div>
               </div>
-              <F label="Misure di prevenzione adottate" field="misure_prevenzione" type="textarea"
+              <Field form={form} set={set} label="Misure di prevenzione adottate" field="misure_prevenzione" type="textarea"
                  placeholder="es. Parapetti anticaduta, imbragature, quadri elettrici CEI, aspiratori polveri..." />
               <div className="section-divider">DPI previsti</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>

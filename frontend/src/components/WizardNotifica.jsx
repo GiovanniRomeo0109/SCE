@@ -102,7 +102,7 @@ export default function WizardNotifica() {
     } finally { setLoading(false); }
   };
 
-  const F = (props) => <Field {...props} form={form} set={set} />;
+  
 
   return (
     <div>
@@ -123,9 +123,9 @@ export default function WizardNotifica() {
                 oppure &gt; 20 lavoratori contemporanei, oppure lavori con rischi Allegato XI.
               </div>
               <div className="form-grid">
-                <F label="Durata prevista (uomini-giorno)" field="uomini_giorno" type="number"
+                <Field form={form} set={set} label="Durata prevista (uomini-giorno)" field="uomini_giorno" type="number"
                    hint="Somma: n. lavoratori × giorni per ogni fase" placeholder="es. 250" />
-                <F label="Max lavoratori contemporanei" field="max_lavoratori" type="number" placeholder="es. 15" />
+                <Field form={form} set={set} label="Max lavoratori contemporanei" field="max_lavoratori" type="number" placeholder="es. 15" />
               </div>
               <div className="form-group">
                 <label className="form-label">Sono previsti lavori con rischi Allegato XI?</label>
@@ -168,10 +168,10 @@ export default function WizardNotifica() {
                 </div>
               )}
               <div className="form-grid">
-                <F label="Indirizzo cantiere" field="indirizzo_cantiere" />
-                <F label="Comune"             field="citta_cantiere" />
-                <F label="Provincia"          field="provincia_cantiere" placeholder="es. MI" />
-                <F label="CAP"                field="cap_cantiere" />
+                <Field form={form} set={set} label="Indirizzo cantiere" field="indirizzo_cantiere" />
+                <Field form={form} set={set} label="Comune"             field="citta_cantiere" />
+                <Field form={form} set={set} label="Provincia"          field="provincia_cantiere" placeholder="es. MI" />
+                <Field form={form} set={set} label="CAP"                field="cap_cantiere" />
               </div>
               <div className="form-group">
                 <label className="form-label">Natura dell'opera</label>
@@ -183,12 +183,12 @@ export default function WizardNotifica() {
                     'Opere di urbanizzazione','Opere stradali','Demolizione'].map(o => <option key={o}>{o}</option>)}
                 </select>
               </div>
-              <F label="Descrizione sommaria" field="descrizione_opera" type="textarea" />
+              <Field form={form} set={set} label="Descrizione sommaria" field="descrizione_opera" type="textarea" />
               <div className="form-grid">
-                <F label="Data inizio lavori"  field="data_inizio"        type="date" />
-                <F label="Durata prevista"     field="durata_lavori"      placeholder="es. 6 mesi" />
-                <F label="ASL destinataria"    field="asl_destinataria"   placeholder="ASL di..." />
-                <F label="ITL destinatario"    field="itl_destinatario"   placeholder="ITL di..." />
+                <Field form={form} set={set} label="Data inizio lavori"  field="data_inizio"        type="date" />
+                <Field form={form} set={set} label="Durata prevista"     field="durata_lavori"      placeholder="es. 6 mesi" />
+                <Field form={form} set={set} label="ASL destinataria"    field="asl_destinataria"   placeholder="ASL di..." />
+                <Field form={form} set={set} label="ITL destinatario"    field="itl_destinatario"   placeholder="ITL di..." />
               </div>
               <div className="wizard-nav">
                 <button className="btn btn-ghost" onClick={() => setStep(0)}>← Indietro</button>
@@ -230,22 +230,22 @@ export default function WizardNotifica() {
               </div>
               <div className="form-grid">
                 {form.committente_tipo === 'persona_giuridica' && (
-                  <F label="Ragione Sociale" field="committente_ragione_sociale" />
+                  <Field form={form} set={set} label="Ragione Sociale" field="committente_ragione_sociale" />
                 )}
-                <F label="Nome"        field="committente_nome" />
-                <F label="Cognome"     field="committente_cognome" />
-                <F label="Codice Fiscale" field="committente_cf" />
-                <F label="Indirizzo"   field="committente_indirizzo" />
-                <F label="Città"       field="committente_citta" />
-                <F label="Telefono"    field="committente_telefono" />
-                <F label="Email / PEC" field="committente_email" />
+                <Field form={form} set={set} label="Nome"        field="committente_nome" />
+                <Field form={form} set={set} label="Cognome"     field="committente_cognome" />
+                <Field form={form} set={set} label="Codice Fiscale" field="committente_cf" />
+                <Field form={form} set={set} label="Indirizzo"   field="committente_indirizzo" />
+                <Field form={form} set={set} label="Città"       field="committente_citta" />
+                <Field form={form} set={set} label="Telefono"    field="committente_telefono" />
+                <Field form={form} set={set} label="Email / PEC" field="committente_email" />
               </div>
               <div className="section-divider" style={{ marginTop: 20 }}>Responsabile dei Lavori (se diverso)</div>
               <div className="form-grid">
-                <F label="Nome RL"    field="rl_nome" />
-                <F label="Cognome RL" field="rl_cognome" />
-                <F label="Qualifica"  field="rl_qualifica" placeholder="es. Direttore Lavori" />
-                <F label="Telefono RL" field="rl_telefono" />
+                <Field form={form} set={set} label="Nome RL"    field="rl_nome" />
+                <Field form={form} set={set} label="Cognome RL" field="rl_cognome" />
+                <Field form={form} set={set} label="Qualifica"  field="rl_qualifica" placeholder="es. Direttore Lavori" />
+                <Field form={form} set={set} label="Telefono RL" field="rl_telefono" />
               </div>
               <div className="wizard-nav">
                 <button className="btn btn-ghost" onClick={() => setStep(1)}>← Indietro</button>
@@ -274,12 +274,12 @@ export default function WizardNotifica() {
                     </div>
                   )}
                   <div className="form-grid">
-                    <F label="Nome"              field={`${ruolo}_nome`} />
-                    <F label="Cognome"           field={`${ruolo}_cognome`} />
-                    <F label="Ordine Professionale" field={`${ruolo}_ordine`} />
-                    <F label="N. Iscrizione"     field={`${ruolo}_numero_ordine`} />
-                    <F label="Telefono"          field={`${ruolo}_telefono`} />
-                    <F label="PEC"               field={`${ruolo}_pec`} />
+                    <Field form={form} set={set} label="Nome"              field={`${ruolo}_nome`} />
+                    <Field form={form} set={set} label="Cognome"           field={`${ruolo}_cognome`} />
+                    <Field form={form} set={set} label="Ordine Professionale" field={`${ruolo}_ordine`} />
+                    <Field form={form} set={set} label="N. Iscrizione"     field={`${ruolo}_numero_ordine`} />
+                    <Field form={form} set={set} label="Telefono"          field={`${ruolo}_telefono`} />
+                    <Field form={form} set={set} label="PEC"               field={`${ruolo}_pec`} />
                   </div>
                 </div>
               ))}

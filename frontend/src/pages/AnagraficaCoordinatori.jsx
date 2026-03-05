@@ -12,11 +12,13 @@ export default function AnagraficaCoordinatori() {
   const [showForm, setShow]   = useState(false);
   const notify = useNotify();
 
-  const carica = () => getCoordinatori().then(r => setList(r.data)).catch(() => {});
-  useEffect(carica, []);
+  const carica = () => {
+    getCoordinatori().then(r => setList(r.data)).catch(() => {});
+  };
 
-  const set  = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const F    = (props) => <Field {...props} form={form} set={set} />;
+  useEffect(() => { carica(); }, []);
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const apri = (item = null) => { setEditing(item); setForm(item ? { ...item } : EMPTY); setShow(true); };
 
@@ -52,9 +54,9 @@ export default function AnagraficaCoordinatori() {
           </div>
           <form onSubmit={salva}>
             <div className="form-grid">
-              <F label="Nome *"    field="nome" />
-              <F label="Cognome *" field="cognome" />
-              <F label="Codice Fiscale" field="codice_fiscale" />
+              <Field form={form} set={set} label="Nome *"    field="nome" />
+              <Field form={form} set={set} label="Cognome *" field="cognome" />
+              <Field form={form} set={set} label="Codice Fiscale" field="codice_fiscale" />
               <div className="form-group">
                 <label className="form-label">Ordine Professionale</label>
                 <select className="form-control" value={form.ordine_professionale || ''}
@@ -66,16 +68,16 @@ export default function AnagraficaCoordinatori() {
                   <option>Ordine dei Periti Industriali</option>
                 </select>
               </div>
-              <F label="N. Iscrizione Albo"              field="numero_ordine" />
-              <F label="Provincia Albo"                  field="provincia_ordine" />
-              <F label="Titolo di Studio"                field="titolo_studio" />
-              <F label="Anni di Esperienza"              field="anni_esperienza" type="number" />
-              <F label="Attestato Corso 120h"            field="attestato_corso" />
-              <F label="Data Corso"                      field="data_corso"        type="date" />
-              <F label="Data Ultimo Aggiornamento (40h)" field="data_aggiornamento" type="date" />
-              <F label="Telefono"                        field="telefono" />
-              <F label="Email"                           field="email"  type="email" />
-              <F label="PEC"                             field="pec"    type="email" />
+              <Field form={form} set={set} label="N. Iscrizione Albo"              field="numero_ordine" />
+              <Field form={form} set={set} label="Provincia Albo"                  field="provincia_ordine" />
+              <Field form={form} set={set} label="Titolo di Studio"                field="titolo_studio" />
+              <Field form={form} set={set} label="Anni di Esperienza"              field="anni_esperienza" type="number" />
+              <Field form={form} set={set} label="Attestato Corso 120h"            field="attestato_corso" />
+              <Field form={form} set={set} label="Data Corso"                      field="data_corso"         type="date" />
+              <Field form={form} set={set} label="Data Ultimo Aggiornamento (40h)" field="data_aggiornamento" type="date" />
+              <Field form={form} set={set} label="Telefono" field="telefono" />
+              <Field form={form} set={set} label="Email"    field="email" type="email" />
+              <Field form={form} set={set} label="PEC"      field="pec"   type="email" />
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
               <button type="button" className="btn btn-ghost" onClick={() => setShow(false)}>Annulla</button>

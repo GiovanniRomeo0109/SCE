@@ -42,7 +42,7 @@ export default function WizardPSC() {
   }, []);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const F   = (props) => <Field {...props} form={form} set={set} />;
+ 
 
   const handleVerifica = async () => {
     setLoading(true);
@@ -125,9 +125,9 @@ export default function WizardPSC() {
               <div className="wizard-title">Verifica obbligatorietà PSC</div>
               <div className="info-box">Il PSC è obbligatorio quando operano più imprese esecutrici nel cantiere (anche non contemporaneamente).</div>
               <div className="form-grid">
-                <F label="N. imprese esecutrici previste" field="num_imprese" type="number"
+                <Field form={form} set={set} label="N. imprese esecutrici previste" field="num_imprese" type="number"
                    hint="Includere subappaltatori e lavoratori autonomi con mezzi propri" placeholder="es. 3" />
-                <F label="Durata prevista (uomini-giorno)" field="uomini_giorno" type="number" placeholder="es. 400" />
+                <Field form={form} set={set} label="Durata prevista (uomini-giorno)" field="uomini_giorno" type="number" placeholder="es. 400" />
               </div>
               <div className="wizard-nav">
                 <span />
@@ -158,15 +158,15 @@ export default function WizardPSC() {
                     .map(o => <option key={o}>{o}</option>)}
                 </select>
               </div>
-              <F label="Descrizione opera" field="descrizione_opera" type="textarea" />
+              <Field form={form} set={set} label="Descrizione opera" field="descrizione_opera" type="textarea" />
               <div className="form-grid">
-                <F label="Indirizzo cantiere"             field="indirizzo_cantiere" />
-                <F label="Comune"                         field="citta_cantiere" />
-                <F label="Provincia"                      field="provincia_cantiere" placeholder="MI" />
-                <F label="Data inizio lavori"             field="data_inizio"      type="date" />
-                <F label="Data fine lavori"               field="data_fine"        type="date" />
-                <F label="Max lavoratori contemporanei"   field="max_lavoratori"   type="number" />
-                <F label="Importo lavori (€)"             field="importo_lavori"   type="number" />
+                <Field form={form} set={set} label="Indirizzo cantiere"             field="indirizzo_cantiere" />
+                <Field form={form} set={set} label="Comune"                         field="citta_cantiere" />
+                <Field form={form} set={set} label="Provincia"                      field="provincia_cantiere" placeholder="MI" />
+                <Field form={form} set={set} label="Data inizio lavori"             field="data_inizio"      type="date" />
+                <Field form={form} set={set} label="Data fine lavori"               field="data_fine"        type="date" />
+                <Field form={form} set={set} label="Max lavoratori contemporanei"   field="max_lavoratori"   type="number" />
+                <Field form={form} set={set} label="Importo lavori (€)"             field="importo_lavori"   type="number" />
               </div>
               <div className="wizard-nav">
                 <button className="btn btn-ghost" onClick={() => setStep(0)}>← Indietro</button>
@@ -194,12 +194,12 @@ export default function WizardPSC() {
                 </div>
               )}
               <div className="form-grid">
-                <F label="Nome"            field="committente_nome" />
-                <F label="Cognome"         field="committente_cognome" />
-                <F label="Ragione Sociale" field="committente_ragione_sociale" />
-                <F label="Codice Fiscale"  field="committente_cf" />
-                <F label="Telefono"        field="committente_telefono" />
-                <F label="Email / PEC"     field="committente_email" />
+                <Field form={form} set={set} label="Nome"            field="committente_nome" />
+                <Field form={form} set={set} label="Cognome"         field="committente_cognome" />
+                <Field form={form} set={set} label="Ragione Sociale" field="committente_ragione_sociale" />
+                <Field form={form} set={set} label="Codice Fiscale"  field="committente_cf" />
+                <Field form={form} set={set} label="Telefono"        field="committente_telefono" />
+                <Field form={form} set={set} label="Email / PEC"     field="committente_email" />
               </div>
               {['csp','cse'].map(ruolo => (
                 <div key={ruolo}>
@@ -217,13 +217,13 @@ export default function WizardPSC() {
                     </div>
                   )}
                   <div className="form-grid">
-                    <F label="Nome"                 field={`${ruolo}_nome`} />
-                    <F label="Cognome"              field={`${ruolo}_cognome`} />
-                    <F label="Ordine Professionale" field={`${ruolo}_ordine`} />
-                    <F label="N. Iscrizione"        field={`${ruolo}_numero_ordine`} />
-                    <F label="Data aggiornamento"   field={`${ruolo}_data_aggiornamento`} type="date"
+                    <Field form={form} set={set} label="Nome"                 field={`${ruolo}_nome`} />
+                    <Field form={form} set={set} label="Cognome"              field={`${ruolo}_cognome`} />
+                    <Field form={form} set={set} label="Ordine Professionale" field={`${ruolo}_ordine`} />
+                    <Field form={form} set={set} label="N. Iscrizione"        field={`${ruolo}_numero_ordine`} />
+                    <Field form={form} set={set} label="Data aggiornamento"   field={`${ruolo}_data_aggiornamento`} type="date"
                        hint="Aggiornamento 40h ogni 5 anni" />
-                    <F label="PEC" field={`${ruolo}_pec`} />
+                    <Field form={form} set={set} label="PEC" field={`${ruolo}_pec`} />
                   </div>
                 </div>
               ))}
@@ -288,9 +288,9 @@ export default function WizardPSC() {
             <>
               <div className="wizard-title">Lavorazioni e rischi principali</div>
               <div className="info-box">Descrivi le lavorazioni. L'AI genererà le sezioni narrative di analisi dei rischi e misure di prevenzione.</div>
-              <F label="Principali fasi lavorative" field="fasi_descrizione" type="textarea"
+              <Field form={form} set={set} label="Principali fasi lavorative" field="fasi_descrizione" type="textarea"
                  placeholder="es. Demolizioni parziali, scavo fondazioni, struttura in c.a., murature, impianti, finiture..." />
-              <F label="Lavorazioni critiche / ad alto rischio" field="lavorazioni_critiche" type="textarea"
+              <Field form={form} set={set} label="Lavorazioni critiche / ad alto rischio" field="lavorazioni_critiche" type="textarea"
                  placeholder="es. Lavori in quota >2m, scavi >1.5m, demolizioni strutturali, vicinanza linee elettriche..." />
               <div className="form-grid">
                 <div className="form-group">
@@ -305,8 +305,8 @@ export default function WizardPSC() {
                     <option>Linee elettriche aeree</option>
                   </select>
                 </div>
-                <F label="ASL competente"          field="asl_destinataria"  placeholder="ASL di..." />
-                <F label="Ospedale / PS più vicino" field="ospedale_vicino" />
+                <Field form={form} set={set} label="ASL competente"          field="asl_destinataria"  placeholder="ASL di..." />
+                <Field form={form} set={set} label="Ospedale / PS più vicino" field="ospedale_vicino" />
               </div>
               <div className="wizard-nav">
                 <button className="btn btn-ghost" onClick={() => setStep(3)}>← Indietro</button>

@@ -12,11 +12,13 @@ export default function AnagraficaCommittenti() {
   const [showForm, setShow]   = useState(false);
   const notify = useNotify();
 
-  const carica = () => getCommittenti().then(r => setList(r.data)).catch(() => {});
-  useEffect(carica, []);
+  const carica = () => {
+    getCommittenti().then(r => setList(r.data)).catch(() => {});
+  };
 
-  const set  = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const F    = (props) => <Field {...props} form={form} set={set} />;
+  useEffect(() => { carica(); }, []);
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const apri = (item = null) => {
     setEditing(item);
@@ -63,16 +65,20 @@ export default function AnagraficaCommittenti() {
               </select>
             </div>
             <div className="form-grid">
-              <F label="Nome" field="nome" req />
-              <F label="Cognome" field="cognome" />
-              {form.tipo === 'persona_giuridica' && <F label="Ragione Sociale" field="ragione_sociale" />}
-              <F label="Codice Fiscale" field="codice_fiscale" />
-              {form.tipo === 'persona_giuridica' && <F label="P.IVA" field="piva" />}
-              <F label="Indirizzo" field="indirizzo" />
-              <F label="Città" field="citta" />
-              <F label="Provincia" field="provincia" />
-              <F label="Telefono" field="telefono" />
-              <F label="Email / PEC" field="email" type="email" />
+              <Field form={form} set={set} label="Nome" field="nome" req />
+              <Field form={form} set={set} label="Cognome" field="cognome" />
+              {form.tipo === 'persona_giuridica' && (
+                <Field form={form} set={set} label="Ragione Sociale" field="ragione_sociale" />
+              )}
+              <Field form={form} set={set} label="Codice Fiscale" field="codice_fiscale" />
+              {form.tipo === 'persona_giuridica' && (
+                <Field form={form} set={set} label="P.IVA" field="piva" />
+              )}
+              <Field form={form} set={set} label="Indirizzo" field="indirizzo" />
+              <Field form={form} set={set} label="Città" field="citta" />
+              <Field form={form} set={set} label="Provincia" field="provincia" />
+              <Field form={form} set={set} label="Telefono" field="telefono" />
+              <Field form={form} set={set} label="Email / PEC" field="email" type="email" />
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
               <button type="button" className="btn btn-ghost" onClick={() => setShow(false)}>Annulla</button>
