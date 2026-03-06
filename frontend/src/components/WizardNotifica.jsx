@@ -331,8 +331,7 @@ export default function WizardNotifica() {
                 Il documento DOCX è pronto. Verificalo e firmalo prima dell'invio ad ASL e ITL.
               </p>
               {docId && (
-                <a href={`/api/documents/download/${docId}`} className="btn btn-gold"
-                   download style={{ fontSize: '1rem', padding: '12px 28px' }}>
+                <a href={`http://localhost:8000/api/documents/download/${docId}`} className="btn btn-gold" download>
                   ↓ Scarica DOCX
                 </a>
               )}

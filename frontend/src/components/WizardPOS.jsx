@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';   // ← aggiungi useLocation
-import { useNavigate } from 'react-router-dom';
+
 import { getImprese, checkObbligatorieta, generaDocumento, generaContenutoAI } from '../utils/api';
 import { useNotify } from '../App';
 import Field from './Field';
@@ -391,8 +391,7 @@ export default function WizardPOS() {
                 Fallo firmare dal Datore di Lavoro prima di consegnarlo al CSE.
               </p>
               {docId && (
-                <a href={`/api/documents/download/${docId}`} className="btn btn-gold" download
-                   style={{ fontSize: '1rem', padding: '12px 28px' }}>
+                <a href={`http://localhost:8000/api/documents/download/${docId}`} className="btn btn-gold" download>
                   ↓ Scarica POS in DOCX
                 </a>
               )}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';   // ← aggiungi useLocation
-import { useNavigate } from 'react-router-dom';
+
 import { getCommittenti, getCoordinatori, getImprese, checkObbligatorieta, generaDocumento, generaContenutoAI } from '../utils/api';
 import { useNotify } from '../App';
 import Field from './Field';
@@ -334,7 +334,7 @@ export default function WizardPSC() {
                   ['Presidi PS e antincendio',                 'costo_ps_ai'],
                   ['Cartellonistica di sicurezza',             'costo_cartelli'],
                 ].map(([label, field]) => (
-                  <F key={field} label={`${label} (€)`} field={field} type="number" />
+                  <Field key={field} form={form} set={set} label={`${label} (€)`} field={field} type="number" />
                 ))}
                 <div className="form-group" style={{ background: '#EEF4FA', padding: 12, borderRadius: 8 }}>
                   <label className="form-label" style={{ fontWeight: 700 }}>TOTALE COSTI SICUREZZA (€)</label>
@@ -390,8 +390,7 @@ export default function WizardPSC() {
                 Verificalo e firmalo prima dell'utilizzo in cantiere.
               </p>
               {docId && (
-                <a href={`/api/documents/download/${docId}`} className="btn btn-gold" download
-                   style={{ fontSize: '1rem', padding: '12px 28px' }}>
+                <a href={`http://localhost:8000/api/documents/download/${docId}`} className="btn btn-gold" download>
                   ↓ Scarica PSC in DOCX
                 </a>
               )}

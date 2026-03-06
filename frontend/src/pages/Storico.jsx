@@ -63,7 +63,7 @@ export default function Storico() {
                         {d.created_at ? new Date(d.created_at).toLocaleDateString('it-IT') : '—'}
                       </td>
                       <td style={{ display: 'flex', gap: 8 }}>
-                        <a href={`/api/documents/download/${d.id}`} className="btn btn-ghost btn-sm" download>
+                       <a href={`http://localhost:8000/api/documents/download/${docId}`} className="btn btn-gold" download>
                           ↓ DOCX
                         </a>
                         <button className="btn btn-danger btn-sm" onClick={() => handleDelete(d.id)}>🗑</button>
