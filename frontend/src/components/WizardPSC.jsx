@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';   // ← aggiungi useLocation
 
-import { getCommittenti, getCoordinatori, getImprese, checkObbligatorieta, generaDocumento, generaContenutoAI } from '../utils/api';
 import { useNotify } from '../App';
 import Field from './Field';
+import { getCommittenti, getCoordinatori, getImprese, checkObbligatorieta, generaDocumento, generaContenutoAI, analisiRischi } from '../utils/api';
 
-const STEPS = ['Verifica', 'Cantiere', 'Soggetti', 'Imprese', 'Lavorazioni', 'Costi', 'Genera'];
+const STEPS = ['Verifica', 'Cantiere', 'Soggetti', 'Imprese', 'Lavorazioni', 'Area e Rischi', 'Costi', 'Genera'];
 
 function StepBar({ step, steps }) {
   return (
@@ -24,6 +24,7 @@ function StepBar({ step, steps }) {
 }
 
 export default function WizardPSC() {
+  const [datiArea, setDatiArea] = useState({});
   const location    = useLocation();                                        // ← NUOVO
   const initialData = location.state?.initialData || {};                   // ← NUOVO
 
@@ -47,6 +48,7 @@ export default function WizardPSC() {
   }, []);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+   const setArea = (k, v) => setDatiArea(f => ({ ...f, [k]: v }));
  
 
   const handleVerifica = async () => {
@@ -92,28 +94,57 @@ export default function WizardPSC() {
       setImpreseSel(prev => [...prev, { ...imp, attivita: '' }]);
   };
 
-  const handleGenera = async () => {
-    setLoading(true);
+ const handleGenera = async () => {
+  setLoading(true);
+  try {
+    const formData = { ...form, imprese_esecutrici: impreseSel };
+    let contenutoAI = {};
+
+    // 1. Analisi rischi specializzata — blocco separato
+    let sezione3 = null;
     try {
-      const formData = { ...form, imprese_esecutrici: impreseSel };
-      let contenutoAI = null;
-      try {
-        const aiRes = await generaContenutoAI({ tipo_documento: 'psc', form_data: formData });
-        contenutoAI = aiRes.data.contenuto;
-      } catch {}
-      const res = await generaDocumento({
-        tipo_documento: 'psc',
-        form_data:      formData,
-        contenuto_ai:   contenutoAI,
-        nome_cantiere:  form.citta_cantiere || 'Cantiere',
+      const rischiRes = await analisiRischi({
+        form_data: form,
+        imprese_esecutrici: impreseSel,
+        dati_area: datiArea,
       });
-      setDocId(res.data.doc_id);
-      setStep(7);
-      notify('PSC generato! ✓', 'success');
+      sezione3 = rischiRes.data.sezione_3;
+      console.log('✅ analisi-rischi OK, lunghezza:', sezione3?.length);
     } catch (e) {
-      notify('Errore: ' + (e.response?.data?.detail || e.message), 'error');
-    } finally { setLoading(false); }
-  };
+      console.error('❌ analisi-rischi fallita:', e.message);
+    }
+
+    // 2. Contenuto narrativo generico — blocco separato
+    try {
+      const aiRes = await generaContenutoAI({ tipo_documento: 'psc', form_data: formData });
+      contenutoAI = aiRes.data.contenuto || {};
+    } catch (e) {
+      console.error('❌ genera-contenuto fallita:', e.message);
+    }
+
+    // 3. Unisci — sezione3 sovrascrive sempre i campi rischi generici
+    if (sezione3) {
+      contenutoAI.sezione_3_completa = sezione3;
+      console.log('✅ sezione_3_completa aggiunta al payload');
+    } else {
+      console.warn('⚠️ sezione_3_completa assente — userà il fallback');
+    }
+
+    const res = await generaDocumento({
+      tipo_documento: 'psc',
+      form_data: formData,
+      contenuto_ai: contenutoAI,
+      nome_cantiere: form.citta_cantiere || 'Cantiere',
+    });
+    setDocId(res.data.doc_id);
+    setStep(8);
+    notify('PSC generato! ✓', 'success');
+  } catch (e) {
+    notify('Errore: ' + (e.response?.data?.detail || e.message), 'error');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div>
@@ -321,6 +352,141 @@ export default function WizardPSC() {
           )}
 
           {step === 5 && (
+  <>
+    <div className="wizard-title">Caratteristiche dell'area di cantiere</div>
+    <div className="info-box">
+      Queste informazioni sono essenziali per l'analisi dei rischi specifici dell'area (sez. 3.1 PSC).
+      Più dettagli fornisci, più precisa sarà l'analisi dell'agente.
+    </div>
+
+    <div className="section-divider">Sottoservizi e linee</div>
+    <div className="form-grid">
+      <div className="form-group">
+        <label className="form-label">Sottoservizi presenti nell'area di scavo</label>
+        <select className="form-control" value={datiArea.sottoservizi || ''}
+          onChange={e => setArea('sottoservizi', e.target.value)}>
+          <option value="">Seleziona...</option>
+          <option>Nessuno noto — richiesta planimetrie in corso</option>
+          <option>Rete gas metano</option>
+          <option>Rete elettrica BT interrata</option>
+          <option>Rete acquedotto</option>
+          <option>Rete fognaria</option>
+          <option>Cavidotti telecomunicazioni</option>
+          <option>Più sottoservizi — vedi planimetrie allegate</option>
+        </select>
+      </div>
+      <div className="form-group">
+        <label className="form-label">Linee elettriche aeree in prossimità</label>
+        <select className="form-control" value={datiArea.linee_aeree || ''}
+          onChange={e => setArea('linee_aeree', e.target.value)}>
+          <option value="">Seleziona...</option>
+          <option>Nessuna linea aerea presente</option>
+          <option>Linee BT (bassa tensione) — distanza &gt;5m</option>
+          <option>Linee BT — distanza &lt;5m (misure specifiche)</option>
+          <option>Linee MT (media tensione) — distanza &gt;7m</option>
+          <option>Linee MT — distanza &lt;7m (contattare gestore)</option>
+          <option>Linee ferroviarie FS in prossimità</option>
+        </select>
+      </div>
+    </div>
+
+    <div className="section-divider">Viabilità e contesto urbano</div>
+    <div className="form-grid">
+      <div className="form-group">
+        <label className="form-label">Traffico veicolare adiacente al cantiere</label>
+        <select className="form-control" value={datiArea.traffico || ''}
+          onChange={e => setArea('traffico', e.target.value)}>
+          <option value="">Seleziona...</option>
+          <option>Area privata — nessun traffico pubblico</option>
+          <option>Strada comunale a basso traffico</option>
+          <option>Strada urbana a medio traffico</option>
+          <option>Strada urbana ad alto traffico / arteria principale</option>
+          <option>Strada provinciale/statale — piano segnaletica DM 2002</option>
+        </select>
+      </div>
+      <div className="form-group">
+        <label className="form-label">Edifici adiacenti / terzi esposti</label>
+        <select className="form-control" value={datiArea.edifici_adiacenti || ''}
+          onChange={e => setArea('edifici_adiacenti', e.target.value)}>
+          <option value="">Seleziona...</option>
+          <option>Area libera — nessun edificio adiacente</option>
+          <option>Edifici residenziali adiacenti (distanza &gt;3m)</option>
+          <option>Edifici residenziali a confine o in aderenza</option>
+          <option>Attività commerciali/industriali adiacenti</option>
+          <option>Scuole, ospedali o luoghi affollati nelle vicinanze</option>
+        </select>
+      </div>
+    </div>
+
+    <div className="section-divider">Terreno e condizioni geologiche</div>
+    <div className="form-grid">
+      <div className="form-group">
+        <label className="form-label">Tipo di terreno prevalente</label>
+        <select className="form-control" value={datiArea.tipo_terreno || ''}
+          onChange={e => setArea('tipo_terreno', e.target.value)}>
+          <option value="">Seleziona...</option>
+          <option>Terreno coesivo (argilla) — buona stabilità</option>
+          <option>Terreno incoerente (sabbia/ghiaia) — rischio franamento</option>
+          <option>Terreno misto — valutazione specifica</option>
+          <option>Roccia — alta stabilità</option>
+          <option>Riporto/terra di riempimento — instabile</option>
+        </select>
+      </div>
+      <div className="form-group">
+        <label className="form-label">Presenza falda acquifera</label>
+        <select className="form-control" value={datiArea.falda || ''}
+          onChange={e => setArea('falda', e.target.value)}>
+          <option value="">Seleziona...</option>
+          <option>Non presente nelle profondità di scavo previste</option>
+          <option>Presente a profondità &gt; scavo — monitoraggio</option>
+          <option>Presente a profondità scavo — pompaggio necessario</option>
+          <option>Non verificata — indagine geologica in corso</option>
+        </select>
+      </div>
+    </div>
+
+    <div className="section-divider">Rischi specifici</div>
+    <div className="form-group">
+      <label className="form-label">Presenza di amianto (edifici ante 1992)</label>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+        {[
+          { v: 'No / edificio post 1992', l: 'No — edificio post 1992 o nuova costruzione', color: '#27AE60' },
+          { v: 'Perizia negativa eseguita', l: 'Perizia effettuata — risultato negativo', color: '#27AE60' },
+          { v: 'Perizia in corso', l: 'Perizia in corso — intervento subordinato al risultato', color: '#C88B2A' },
+          { v: 'Amianto presente — bonifica prevista', l: '⚠️ Amianto presente — piano di bonifica obbligatorio (D.Lgs. 257/06)', color: '#C0392B' },
+        ].map(o => (
+          <label key={o.v} style={{
+            display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+            padding: '10px 14px', borderRadius: 6, border: '1.5px solid',
+            borderColor: datiArea.amianto === o.v ? o.color : 'var(--border)',
+            background: datiArea.amianto === o.v ? '#F8F5F0' : 'white',
+            fontSize: '0.875rem'
+          }}>
+            <input type="radio" name="amianto"
+              checked={datiArea.amianto === o.v}
+              onChange={() => setArea('amianto', o.v)} />
+            {o.l}
+          </label>
+        ))}
+      </div>
+    </div>
+
+    <div className="form-group">
+      <label className="form-label">Note aggiuntive sull'area (sopralluogo, criticità particolari)</label>
+      <textarea className="form-control" rows={3}
+        value={datiArea.note_area || ''}
+        placeholder="es. Presenza di alberi ad alto fusto, area in pendenza 15%, cantiere in ZTL, vicinanza a corsi d'acqua..."
+        onChange={e => setArea('note_area', e.target.value)} />
+    </div>
+
+    <div className="wizard-nav">
+      <button className="btn btn-ghost" onClick={() => setStep(4)}>← Indietro</button>
+      <button className="btn btn-primary" onClick={() => setStep(6)}>Avanti →</button>
+    </div>
+  </>
+)}
+
+          {step === 6 && (
             <>
               <div className="wizard-title">Stima costi della sicurezza</div>
               <div className="warn-box">⚠ I costi della sicurezza NON sono soggetti a ribasso d'asta — Art. 100 co. 1, D.Lgs. 81/2008</div>
@@ -345,13 +511,13 @@ export default function WizardPSC() {
                 </div>
               </div>
               <div className="wizard-nav">
-                <button className="btn btn-ghost" onClick={() => setStep(4)}>← Indietro</button>
-                <button className="btn btn-primary" onClick={() => setStep(6)}>Avanti →</button>
+                <button className="btn btn-ghost" onClick={() => setStep(5)}>← Indietro</button>
+                <button className="btn btn-primary" onClick={() => setStep(7)}>Avanti →</button>
               </div>
             </>
           )}
 
-          {step === 6 && (
+          {step === 7 && (
             <>
               <div className="wizard-title">Genera PSC</div>
               <div style={{ background: '#F8F5F0', borderRadius: 8, padding: 20, fontSize: '0.875rem', marginBottom: 20 }}>
@@ -382,7 +548,7 @@ export default function WizardPSC() {
             </>
           )}
 
-          {step === 7 && (
+          {step === 8 && (
             <div style={{ textAlign: 'center', padding: '32px 0' }}>
               <div style={{ fontSize: '3rem', marginBottom: 16 }}>📗</div>
               <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#1A3A5C', marginBottom: 8 }}>PSC Generato!</div>

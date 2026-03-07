@@ -254,3 +254,115 @@ Genera ESCLUSIVAMENTE un oggetto JSON valido con queste chiavi:
         contenuto = {"raw_text": raw}
 
     return {"contenuto": contenuto}
+
+def carica_skill_rischi() -> str:
+    """Carica il file SKILL RISCHI_PSC.md"""
+    skill_path = os.path.join(os.path.dirname(__file__), '..', 'skill', 'RISCHI_PSC.md')
+    try:
+        with open(skill_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception:
+        return ""
+
+
+@router.post("/analisi-rischi")
+def analisi_rischi_psc(payload: dict):
+    """
+    Genera la sezione 3 completa del PSC: analisi rischi, tabelle P×D, 
+    interferenze tra imprese e cronoprogramma ottimizzato.
+    """
+    client = anthropic.Anthropic()
+    skill  = carica_skill_rischi()
+
+    form_data       = payload.get("form_data", {})
+    imprese         = payload.get("imprese_esecutrici", [])
+    dati_area       = payload.get("dati_area", {})
+
+    # Costruisci lista imprese per il prompt
+    imprese_testo = "\n".join([
+        f"  - {i.get('ragione_sociale','?')}: {i.get('attivita','attività generiche')}"
+        for i in imprese
+    ]) or "  - Impresa unica (dati non specificati)"
+
+    prompt = f"""
+{skill}
+
+---
+
+## DATI DEL CANTIERE DA ANALIZZARE
+
+**Natura opera:** {form_data.get('natura_opera', 'Non specificata')}
+**Descrizione:** {form_data.get('descrizione_opera', 'Non specificata')}
+**Indirizzo cantiere:** {form_data.get('indirizzo_cantiere', '')} {form_data.get('citta_cantiere', '')} ({form_data.get('provincia_cantiere', '')})
+**Data inizio:** {form_data.get('data_inizio', 'Non specificata')}
+**Data fine:** {form_data.get('data_fine', 'Non specificata')}
+**Max lavoratori contemporanei:** {form_data.get('max_lavoratori', 'Non specificato')}
+**Uomini/giorno totali:** {form_data.get('uomini_giorno', 'Non specificato')}
+
+**Fasi lavorative principali:**
+{form_data.get('fasi_descrizione', 'Non specificate')}
+
+**Lavorazioni critiche indicate:**
+{form_data.get('lavorazioni_critiche', 'Nessuna indicata')}
+
+**Rischi Allegato XI presenti:** {form_data.get('rischi_allegato_xi_desc', 'Nessuno specifico')}
+
+**Imprese esecutrici e attività:**
+{imprese_testo}
+
+**DATI SPECIFICI AREA DI CANTIERE (da sopralluogo/documentazione):**
+- Sottoservizi presenti: {dati_area.get('sottoservizi', 'Non verificati')}
+- Linee aeree in prossimità: {dati_area.get('linee_aeree', 'Nessuna rilevata')}
+- Traffico veicolare adiacente: {dati_area.get('traffico', 'Non specificato')}
+- Edifici adiacenti: {dati_area.get('edifici_adiacenti', 'Non specificati')}
+- Tipo di terreno: {dati_area.get('tipo_terreno', 'Non specificato')}
+- Presenza falda acquifera: {dati_area.get('falda', 'Non verificata')}
+- Edifici esistenti ante 1992 (rischio amianto): {dati_area.get('amianto', 'No / non applicabile')}
+- Note aggiuntive sull'area: {dati_area.get('note_area', 'Nessuna')}
+
+---
+
+## COMPITO
+
+Genera la **Sezione 3 — Analisi e Valutazione dei Rischi** del PSC, 
+completa e professionale, pronta per la firma del CSP.
+
+Struttura OBBLIGATORIA:
+
+### 3.1 RISCHI DERIVANTI DALL'AREA DI CANTIERE
+- Tabella con: Pericolo | Fonte | P | D | R | Livello | Misure di prevenzione | Rif. normativo
+- Testo narrativo descrittivo dell'area e dei rischi principali
+
+### 3.2 RISCHI DERIVANTI DALLE LAVORAZIONI
+Per ogni fase lavorativa identificata:
+- Tabella P×D con tutti i rischi (usa il catalogo della SKILL)
+- Testo narrativo approfondito per ogni rischio con R ≥ 9
+- DPI specifici con norma di riferimento
+- Procedure operative prescrittive
+
+### 3.3 RISCHI DA INTERFERENZE TRA IMPRESE
+- Analisi di tutte le possibili interferenze tra le imprese elencate
+- Tabella interferenze: Impresa A | Impresa B | Tipo interferenza | Area | Rischio | Misura
+- CRONOPROGRAMMA GENERALE (Gantt testuale per settimane/mesi, vincolo: {form_data.get('data_inizio','inizio')} → {form_data.get('data_fine','fine')})
+- CRONOPROGRAMMA PER IMPRESA: attività, periodo, area, interferenze gestite
+
+### 3.4 MISURE GENERALI DI COORDINAMENTO
+- Prescrizioni generali valide per tutte le imprese
+- Procedure di emergenza (primo soccorso, antincendio, evacuazione)
+- Presidi sanitari e antincendio richiesti
+
+Usa linguaggio tecnico-giuridico formale. 
+Cita SEMPRE l'articolo di legge specifico o la norma tecnica per ogni misura.
+Per rischi R≥12 aggiungi l'avviso sulle sanzioni penali/amministrative.
+"""
+
+    risposta = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=8000,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    return {
+        "sezione_3": risposta.content[0].text,
+        "rischi_identificati": True
+    }

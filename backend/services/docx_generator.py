@@ -462,24 +462,33 @@ def genera_psc(form_data: dict, contenuto_ai: Optional[dict], output_dir: str) -
     _section(doc, "ANALISI E VALUTAZIONE DEI RISCHI", "3.")
     _note(doc, "Allegato XV, punto 2.1.2 lett. c — D.Lgs. 81/2008")
 
-    for sub_title, ai_key, fallback in [
-        ("3.1  Rischi derivanti dall'area di cantiere",
-         "rischi_area",
-         "Descrivere i rischi specifici dell'area: traffico, sottoservizi, "
-         "condizioni del terreno, edifici adiacenti, linee aeree."),
-        ("3.2  Rischi derivanti dalle lavorazioni",
-         "rischi_lavorazioni",
-         "Analizzare per ogni fase: caduta dall'alto, seppellimento, "
-         "investimento, elettrocuzione, rumore, polveri, agenti chimici."),
-        ("3.3  Rischi da interferenze tra imprese",
-         "rischi_interferenze",
-         "Identificare sovrapposizioni temporali e spaziali delle lavorazioni "
-         "delle diverse imprese e le relative misure di gestione."),
-    ]:
-        _subsection(doc, sub_title)
-        testo = ai.get(ai_key, fallback)
-        p = doc.add_paragraph(testo)
-        p.runs[0].font.size = Pt(10)
+    if ai.get("sezione_3_completa"):
+        for riga in ai["sezione_3_completa"].split("\n"):
+            p = doc.add_paragraph(riga)
+        if p.runs:                          # ← controlla che runs non sia vuoto
+            p.runs[0].font.size = Pt(10)
+    else:
+        # Fallback: sezioni separate dal genera-contenuto generico
+        for sub_title, ai_key, fallback in [
+            ("3.1  Rischi derivanti dall'area di cantiere",
+            "rischi_area",
+            "Descrivere i rischi specifici dell'area: traffico, sottoservizi, "
+            "condizioni del terreno, edifici adiacenti, linee aeree."),
+            ("3.2  Rischi derivanti dalle lavorazioni",
+            "rischi_lavorazioni",
+            "Analizzare per ogni fase: caduta dall'alto, seppellimento, "
+            "investimento, elettrocuzione, rumore, polveri, agenti chimici."),
+            ("3.3  Rischi da interferenze tra imprese",
+            "rischi_interferenze",
+            "Identificare sovrapposizioni temporali e spaziali delle lavorazioni "
+            "delle diverse imprese e le relative misure di gestione."),
+        ]:
+            _subsection(doc, sub_title)
+            testo = ai.get(ai_key, fallback)
+            p = doc.add_paragraph(testo)
+            p.runs[0].font.size = Pt(10)
+
+   
 
     # ── 4. Organizzazione cantiere ────────────────────────────────────────────
     doc.add_page_break()
