@@ -108,6 +108,8 @@ def init_db():
             impresa_nome        TEXT,
             file_path           TEXT,
             versione            TEXT    DEFAULT '1.0',
+            stato               TEXT    DEFAULT 'Generato',
+            data_generazione    TEXT,
             created_at          TEXT    DEFAULT (datetime('now'))
         );
     """)
