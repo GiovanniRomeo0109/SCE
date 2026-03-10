@@ -36,4 +36,19 @@ export const estraiDati = (formData) =>
   });
   // Aggiungi questa riga alla fine
 export const analisiRischi = (payload) => api.post('/agent/analisi-rischi', payload);
+
+export const verificaPsc = (formData) =>
+  api.post('/verifica/verifica-psc', formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } });
+
+export const verificaPos = (formData) =>
+  api.post('/verifica/verifica-pos', formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } });
+
+export const verificaCongruita = (formData) =>
+  api.post('/verifica/verifica-congruita', formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } });
+
+export const generaVerbale = (payload) =>
+  api.post('/verifica/genera-verbale', payload);
 export default api;

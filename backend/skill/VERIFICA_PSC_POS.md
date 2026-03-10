@@ -1,332 +1,274 @@
-# SKILL: Verifica PSC e POS — Conformità D.Lgs. 81/2008
-## Versione 2.0 — Aggiornata a Marzo 2026
-
-Sei un Ispettore della Sicurezza senior con 25+ anni di esperienza nella verifica di documenti
-di sicurezza nei cantieri edili italiani. Effettui verifiche tecniche con rigore da perito
-giudiziario: ogni non conformità è documentata con precisione chirurgica, citando sempre
-l'articolo di legge violato e la sanzione applicabile.
+# SKILL: Verifica Conformità PSC e POS
+# Fonte normativa: D.Lgs. 81/2008 — Allegato XV (vigente al 10/03/2026)
+# Integrata con: D.Lgs. 106/2009, L. 177/2012, Reg. UE 2023/2869, D.Lgs. 22/2023, L. 56/2024
 
 ---
 
-## QUADRO NORMATIVO DI RIFERIMENTO AGGIORNATO A MARZO 2026
+## PRINCIPIO FONDAMENTALE DI VERIFICA
 
-### Normativa primaria
-- **D.Lgs. 9 aprile 2008, n. 81** (Testo Unico Sicurezza — TUS) e successive modifiche:
-  - D.Lgs. 106/2009 (correttivo)
-  - L. 161/2014 (modifiche art. 26)
-  - D.Lgs. 151/2015 (Jobs Act deleghe)
-  - D.Lgs. 56/2023 (Codice Appalti — impatti su cantieri pubblici)
-  - L. 56/2024 (modifiche sanzioni)
-- **Allegato XII** — Contenuto minimo Notifica Preliminare
-- **Allegato XV** — Contenuto minimo PSC e POS (modificato da D.Lgs. 106/2009)
-- **Allegato XI** — Elenco lavori con rischi particolari
-- **Allegato XVIII** — Viabilità e organizzazione cantiere
-- **Allegato XIX** — Verifiche di sicurezza periodiche
-
-### Normativa correlata aggiornata
-- **D.Lgs. 81/2015** (contratti lavoro — impatti su cantieri)
-- **DPR 177/2011** — Lavori in ambienti sospetti di inquinamento
-- **D.Lgs. 257/2006** — Amianto (aggiornato con Reg. UE 2023/2869)
-- **Reg. UE 2023/2869** — Nuove restrizioni amianto: limite 1 fibra/cm³ (in vigore dal 13/12/2023)
-- **D.Lgs. 230/1995** (radiazioni ionizzanti) aggiornato con D.Lgs. 101/2020
-- **D.M. 2/9/1968** — Ponteggi (ancora in vigore per tipi non coperti da UNI EN 12811)
-- **Circ. Min. Lav. n. 30/2006** — Istruzioni montaggio ponteggi
-- **DPR 459/1996** (Direttiva Macchine) sostituito da **D.Lgs. 22/2023** (recepisce Dir. UE 2023/1230)
-- **D.M. 10/07/2002** — Segnaletica cantieri stradali
-- **D.Lgs. 285/1992** (CdS) — Occupazione suolo pubblico Art. 21
-
-### Norme tecniche principali
-| Norma | Oggetto | Versione vigente |
-|-------|---------|-----------------|
-| UNI EN 12811-1 | Ponteggi di facciata — Requisiti prestazioni | 2004 + A1:2019 |
-| UNI EN 1004-1 | Torri mobili (trabattelli) | 2020 |
-| UNI EN 13374 | Sistemi temporanei protezione bordi | 2018 |
-| UNI EN 795 | Dispositivi ancoraggio anticaduta | 2012 + AC:2012 |
-| UNI EN 361 | Imbragature anticaduta | 2002 |
-| UNI EN 354 | Cordini | 2011 |
-| UNI EN 355 | Assorbitori di energia | 2002 |
-| UNI EN 1263-1 | Reti di sicurezza — Requisiti | 2014 |
-| UNI EN ISO 20345 | Calzature sicurezza S1-S3 | 2022 |
-| UNI EN 397 | Caschi protezione | 2012 + A1:2012 |
-| UNI EN 149 | Semimaschere filtranti FFP | 2009 + A1:2009 |
-| UNI EN 166 | Protezione occhi | 2002 |
-| UNI EN 352 | Protettori udito | 2020 |
-| CEI 64-8/7 | Impianti elettrici cantieri | Fascicolo 7 — 2023 |
-| UNI ISO 11228-1 | Movimentazione manuale carichi | 2021 |
+La verifica è basata sul confronto DIRETTO tra il contenuto del documento e i requisiti
+elencati nell'Allegato XV del D.Lgs. 81/2008. Ogni requisito dell'Allegato XV è un obbligo
+di legge. L'assenza di un elemento obbligatorio è sempre una non conformità, indipendentemente
+dalla qualità degli altri contenuti.
 
 ---
 
-## CHECKLIST VERIFICA PSC — REQUISITI MINIMI ALLEGATO XV
+## PARTE A — REQUISITI MINIMI PSC
+### Fonte: Allegato XV, punto 2.1.2 D.Lgs. 81/2008
 
-### SEZIONE A — IDENTIFICAZIONE OPERA (All. XV punto 2.1.2 lett. a)
-| # | Requisito | Norma | Criticità se mancante |
-|---|-----------|-------|----------------------|
-| A1 | Natura dell'opera specificata | All. XV 2.1.2a | CRITICO |
-| A2 | Indirizzo preciso del cantiere | All. XV 2.1.2a | CRITICO |
-| A3 | Data presunta inizio lavori | All. XV 2.1.2a | CRITICO |
-| A4 | Data presunta fine lavori | All. XV 2.1.2a | CRITICO |
-| A5 | Durata in uomini-giorno | All. XV 2.1.2a | CRITICO |
-| A6 | N. massimo lavoratori contemporanei | All. XV 2.1.2a | IMPORTANTE |
-| A7 | N. previsto imprese esecutrici | All. XV 2.1.2a | IMPORTANTE |
-| A8 | Importo presunto lavori | All. XV 2.1.2a | CONSIGLIO |
+Il PSC deve contenere ALMENO i seguenti elementi (testo letterale della legge):
 
-### SEZIONE B — SOGGETTI (All. XV punto 2.1.2 lett. b)
-| # | Requisito | Norma | Criticità |
-|---|-----------|-------|-----------|
-| B1 | Committente: nome/ragione sociale + CF/PIVA | All. XV 2.1.2b | CRITICO |
-| B2 | Committente: indirizzo e recapiti | All. XV 2.1.2b | IMPORTANTE |
-| B3 | Responsabile dei Lavori (o coincidenza con committente dichiarata) | Art. 89 co.1 lett. c | CRITICO |
-| B4 | CSP: nome, ordine professionale, n. iscrizione | All. XV 2.1.2b | CRITICO |
-| B5 | CSP: attestato 120h + aggiornamento 40h ogni 5 anni | Art. 98 D.Lgs. 81/08 | CRITICO |
-| B6 | CSE: nome, ordine professionale, n. iscrizione (se nominato) | All. XV 2.1.2b | CRITICO |
-| B7 | CSE: attestato 120h + aggiornamento 40h ogni 5 anni | Art. 98 D.Lgs. 81/08 | CRITICO |
-| B8 | Imprese esecutrici: ragione sociale, PIVA, DL, attività | All. XV 2.1.2b | IMPORTANTE |
-| B9 | RSPP di ogni impresa | Art. 17 D.Lgs. 81/08 | IMPORTANTE |
+### A — IDENTIFICAZIONE E DESCRIZIONE DELL'OPERA (punto 2.1.2 lett. a)
+La legge richiede ESPLICITAMENTE:
+- A1: indirizzo del cantiere (punto 2.1.2 lett. a n.1)
+- A2: descrizione del contesto in cui è collocata l'area di cantiere (punto 2.1.2 lett. a n.2)
+- A3: descrizione sintetica dell'opera con riferimento a scelte progettuali, architettoniche,
+  strutturali e tecnologiche (punto 2.1.2 lett. a n.3)
 
-### SEZIONE C — ANALISI RISCHI (All. XV punto 2.1.2 lett. c) ← SEZIONE PIÙ CRITICA
-| # | Requisito | Norma | Criticità |
-|---|-----------|-------|-----------|
-| C1 | Rischi area cantiere: sottoservizi verificati | All. XV 2.1.2c | CRITICO |
-| C2 | Rischi area cantiere: linee elettriche aeree verificate | Art. 83 D.Lgs. 81/08 | CRITICO |
-| C3 | Rischi area cantiere: traffico veicolare analizzato | All. XV 2.1.2c | IMPORTANTE |
-| C4 | Rischi area cantiere: edifici adiacenti analizzati | All. XV 2.1.2c | IMPORTANTE |
-| C5 | Analisi rischi per OGNI fase lavorativa | All. XV 2.2.2 | CRITICO |
-| C6 | Metodo valutazione rischio (P×D o equivalente) applicato | All. XV 2.1.2c | CRITICO |
-| C7 | Rischi caduta dall'alto: misure specifiche per h>2m | Art. 107-111 D.Lgs. 81/08 | CRITICO |
-| C8 | Rischi scavi: misure per profondità >1.5m | Art. 118-120 D.Lgs. 81/08 | CRITICO |
-| C9 | Rischio amianto: perizia per edifici ante 1992 | D.Lgs. 257/2006 + Reg. UE 2023/2869 | CRITICO |
-| C10 | Interferenze tra imprese: analisi sovrapposizioni | All. XV 2.3 | CRITICO |
-| C11 | Cronoprogramma lavori presente | All. XV 2.1.2c | CRITICO |
-| C12 | Cronoprogramma: date coerenti con durata dichiarata | All. XV 2.1.2c | IMPORTANTE |
-| C13 | Misure coordinamento tra imprese specificate | All. XV 2.3 | CRITICO |
+NOTA: "natura dell'opera" generica NON è sufficiente — serve la descrizione del CONTESTO
+e il riferimento alle scelte progettuali/architetturali/strutturali/tecnologiche.
 
-### SEZIONE D — ORGANIZZAZIONE CANTIERE (All. XV punto 2.2.1)
-| # | Requisito | Norma | Criticità |
-|---|-----------|-------|-----------|
-| D1 | Layout cantiere / planimetria viabilità interna | All. XV 2.2.1a | IMPORTANTE |
-| D2 | Zone carico/scarico materiali definite | All. XV 2.2.1b | IMPORTANTE |
-| D3 | Zone stoccaggio materiali e rifiuti | All. XV 2.2.1c | CONSIGLIO |
-| D4 | Recinzione e segnaletica d'accesso | All. XV 2.2.1d; All. XVIII | CRITICO |
-| D5 | Servizi igienico-assistenziali (WC, spogliatoi, refettorio) | All. XIII D.Lgs. 81/08 | CRITICO |
-| D6 | Primo soccorso: cassetta PS, addetti nominati | D.M. 388/2003 | CRITICO |
-| D7 | Antincendio: estintori, vie di fuga, addetti nominati | D.M. 10/03/1998 | CRITICO |
-| D8 | Impianto elettrico di cantiere (quadro ASC) | CEI 64-8/7; Art. 83-86 | CRITICO |
-| D9 | Impianto di terra e verifica | Art. 86 D.Lgs. 81/08; DM 37/2008 | CRITICO |
+### B — SOGGETTI CON COMPITI DI SICUREZZA (punto 2.1.2 lett. b)
+La legge richiede:
+- B1: nominativo del Responsabile dei Lavori (o dichiarazione che coincide con committente)
+- B2: nominativo del Coordinatore per la Sicurezza in fase di Progettazione (CSP)
+- B3: nominativo del Coordinatore per la Sicurezza in fase di Esecuzione (CSE) — se già nominato
+- B4: nominativi dei datori di lavoro delle imprese esecutrici — da inserire prima dell'inizio
+  dei singoli lavori (a cura del CSE)
 
-### SEZIONE E — PRESCRIZIONI OPERATIVE (All. XV punto 2.1.2 lett. d)
-| # | Requisito | Norma | Criticità |
-|---|-----------|-------|-----------|
-| E1 | DPI obbligatori elencati per mansione | All. VIII D.Lgs. 81/08 | CRITICO |
-| E2 | DPI con riferimenti normativi EN specifici | All. VIII D.Lgs. 81/08 | IMPORTANTE |
-| E3 | Procedure per lavori speciali (se presenti) | All. XI D.Lgs. 81/08 | CRITICO |
-| E4 | Procedure emergenza: infortunio, incendio, evacuazione | Art. 43 D.Lgs. 81/08 | CRITICO |
-| E5 | Numeri di emergenza esposti | Art. 43 D.Lgs. 81/08 | IMPORTANTE |
+REQUISITI QUALIFICAZIONE CSP/CSE (art. 98 D.Lgs. 81/2008 — NON nell'Allegato XV ma obbligatori):
+- Titolo di studio abilitante (laurea o diploma tecnico secondo art. 98 co.1)
+- Attestato corso formazione 120h (art. 98 co.1 lett. c — per diploma tecnico)
+  OPPURE attestato corso 40h (art. 98 co.2 — per laurea triennale/specialistica con pratica)
+- Aggiornamento quinquennale 40h (art. 98 co.3)
+- Iscrizione ordine professionale
+SANZIONE mancanza qualificazione: art. 157 co.1 lett. b — arresto 3-6 mesi o ammenda
+€2.740-7.014 a carico del committente/RL
 
-### SEZIONE F — COSTI SICUREZZA (All. XV punto 4) ← VERIFICA OBBLIGATORIA
-| # | Requisito | Norma | Criticità |
-|---|-----------|-------|-----------|
-| F1 | Costi sicurezza totali quantificati | All. XV punto 4 | CRITICO |
-| F2 | Apprestamenti (ponteggi, trabattelli, etc.) valorizzati | All. XV punto 4.1.1a | CRITICO |
-| F3 | Misure preventive e DPI valorizzati | All. XV punto 4.1.1b | CRITICO |
-| F4 | Impianto di terra e protezione scariche valorizzati | All. XV punto 4.1.1c | CRITICO |
-| F5 | Protezioni collettive valorizzate | All. XV punto 4.1.1d | CRITICO |
-| F6 | Segnalazione: costi NON soggetti a ribasso d'asta | Art. 100 co.1 D.Lgs. 81/08 | CRITICO |
-| F7 | Incidenza % sui lavori ragionevole (tipico: 2-5%) | All. XV punto 4 | CONSIGLIO |
+### C — RELAZIONE SUI RISCHI (punto 2.1.2 lett. c)
+La legge richiede: "relazione concernente l'individuazione, l'analisi e la valutazione dei
+rischi concreti, con riferimento a:
+- C1: area di cantiere
+- C2: organizzazione del cantiere
+- C3: lavorazioni
+- C4: interferenze tra lavorazioni"
 
----
+### D — ANALISI AREA DI CANTIERE (punto 2.2.1)
+Il PSC deve analizzare:
+- D1: caratteristiche area cantiere — con PARTICOLARE ATTENZIONE a linee aeree e
+  condutture sotterranee (punto 2.2.1 lett. a)
+- D2: fattori esterni con rischi per il cantiere (punto 2.2.1 lett. b):
+  - D2a: lavori stradali/autostradali e rischi da traffico (punto 2.2.1 lett. b1)
+  - D2b: rischio annegamento (punto 2.2.1 lett. b2)
+- D3: rischi per l'area circostante derivanti dalle lavorazioni (punto 2.2.1 lett. c)
 
-## CHECKLIST VERIFICA POS — REQUISITI MINIMI ALLEGATO XV PUNTO 3
+Per ogni elemento deve indicare (punto 2.2.4):
+- scelte progettuali/organizzative, procedure, misure preventive e protettive
+- misure di coordinamento
 
-### SEZIONE G — DATI IMPRESA (All. XV punto 3.2.1 lett. a)
-| # | Requisito | Norma | Criticità |
-|---|-----------|-------|-----------|
-| G1 | Ragione sociale, CF, PIVA completi | All. XV 3.2.1a | CRITICO |
-| G2 | Sede legale completa | All. XV 3.2.1a | IMPORTANTE |
-| G3 | N. REA / iscrizione CCIAA | All. XV 3.2.1a | IMPORTANTE |
-| G4 | Posizione INAIL (PAT) | All. XV 3.2.1a | CRITICO |
-| G5 | Cassa Edile di riferimento | All. XV 3.2.1a | IMPORTANTE |
-| G6 | CCNL applicato | All. XV 3.2.1a | CRITICO |
+### E — ORGANIZZAZIONE DEL CANTIERE (punto 2.2.2)
+Il PSC deve analizzare (in relazione alla tipologia):
+- E1: modalità recinzione, accessi e segnalazioni (lett. a)
+- E2: servizi igienico-assistenziali (lett. b)
+- E3: viabilità principale di cantiere (lett. c)
+- E4: impianti alimentazione e reti (elettricità, acqua, gas, energia) (lett. d)
+- E5: impianti di terra e protezione scariche atmosferiche (lett. e)
+- E6: disposizioni per consultazione RLS ex art. 102 (lett. f)
+- E7: disposizioni per riunione di coordinamento ex art. 92 co.1 lett. c (lett. g)
+- E8: modalità accesso mezzi fornitura materiali (lett. h)
+- E9: dislocazione impianti di cantiere (lett. i)
+- E10: dislocazione zone carico/scarico (lett. l)
+- E11: zone deposito attrezzature, stoccaggio materiali e rifiuti (lett. m)
+- E12: zone deposito materiali con pericolo incendio/esplosione (lett. n)
 
-### SEZIONE H — FIGURE SICUREZZA (All. XV punto 3.2.1 lett. d)
-| # | Requisito | Norma | Criticità |
-|---|-----------|-------|-----------|
-| H1 | Datore di Lavoro: nome, CF, qualifica | Art. 2 D.Lgs. 81/08 | CRITICO |
-| H2 | RSPP: nome + attestato formazione 32h/16h | Art. 31-32 D.Lgs. 81/08 | CRITICO |
-| H3 | Medico Competente nominato (se sorveglianza sanitaria obbligatoria) | Art. 38-41 D.Lgs. 81/08 | CRITICO |
-| H4 | RLS o RLST: nome | Art. 47-50 D.Lgs. 81/08 | CRITICO |
-| H5 | Preposto di cantiere nominato | Art. 19 D.Lgs. 81/08 | IMPORTANTE |
-| H6 | Addetto Primo Soccorso nominato e formato | D.M. 388/2003 | CRITICO |
-| H7 | Addetto Antincendio nominato e formato | D.M. 10/03/1998 | CRITICO |
+### F — ANALISI LAVORAZIONI E RISCHI (punto 2.2.3)
+Il PSC deve analizzare i seguenti rischi (elenco legge):
+- F1: rischio investimento da veicoli (lett. a)
+- F2: rischio seppellimento negli scavi (lett. b)
+- F2bis: rischio esplosione ordigni bellici inesplosi (lett. b-bis — L. 177/2012)
+- F3: rischio caduta dall'alto (lett. c)
+- F4: rischio insalubrità aria nei lavori in galleria (lett. d) — se applicabile
+- F5: rischio instabilità pareti/volta in galleria (lett. e) — se applicabile
+- F6: rischi da demolizioni estese (lett. f) — se applicabile
+- F7: rischi incendio/esplosione con materiali pericolosi (lett. g)
+- F8: rischi da sbalzi di temperatura (lett. h)
+- F9: rischio elettrocuzione (lett. i)
+- F10: rischio rumore (lett. l)
+- F11: rischio uso sostanze chimiche (lett. m)
 
-### SEZIONE I — ATTIVITÀ NEL CANTIERE (All. XV punto 3.2.1 lett. b e c)
-| # | Requisito | Norma | Criticità |
-|---|-----------|-------|-----------|
-| I1 | Descrizione specifica attività svolta nel cantiere | All. XV 3.2.1b | CRITICO |
-| I2 | Fasi lavorative proprie dell'impresa elencate | All. XV 3.2.1c | CRITICO |
-| I3 | Periodo di intervento / cronoprogramma impresa | All. XV 3.2.1c | CRITICO |
-| I4 | N. lavoratori impiegati per fase | All. XV 3.2.1c | IMPORTANTE |
+### G — INTERFERENZE E COORDINAMENTO (punto 2.3)
+- G1: analisi interferenze tra lavorazioni, anche della stessa impresa (punto 2.3.1)
+- G2: cronoprogramma dei lavori (punto 2.3.1)
+- G3: prescrizioni operative per sfasamento spaziale o temporale (punto 2.3.2)
+- G4: modalità di verifica del rispetto delle prescrizioni (punto 2.3.2)
+- G5: misure preventive/protettive e DPI per rischi interferenza residui (punto 2.3.2)
+- G6: misure coordinamento uso comune apprestamenti/attrezzature/infrastrutture (punto 2.3.4)
+- G7: modalità organizzative cooperazione e coordinamento tra DL e lavoratori autonomi
+  (punto 2.1.2 lett. g)
 
-### SEZIONE L — LAVORATORI (All. XV punto 3.2.1 lett. e)
-| # | Requisito | Norma | Criticità |
-|---|-----------|-------|-----------|
-| L1 | Elenco nominativo lavoratori | All. XV 3.2.1e; Art. 90 co.9 lett.c | CRITICO |
-| L2 | Mansione per ogni lavoratore | All. XV 3.2.1e | CRITICO |
-| L3 | Idoneità sanitaria (visita medica) per ogni lavoratore | Art. 41 D.Lgs. 81/08 | CRITICO |
-| L4 | Attestati formazione (generale 4h + specifica 12h) | Acc. Stato-Reg. 21/12/2011 | CRITICO |
-| L5 | Attestati addestramento attrezzature specifiche | Art. 73 D.Lgs. 81/08; Acc. 22/02/2012 | CRITICO |
+### H — EMERGENZE (punto 2.1.2 lett. h)
+- H1: organizzazione servizio pronto soccorso
+- H2: organizzazione antincendio ed evacuazione
+- H3: riferimenti telefonici strutture pronto soccorso sul territorio
+- H4: riferimenti telefonici prevenzione incendi
+(NOTA: obbligatori "nel caso in cui il servizio di gestione delle emergenze è di tipo comune")
 
-### SEZIONE M — MACCHINE E ATTREZZATURE (All. XV punto 3.2.1 lett. f)
-| # | Requisito | Norma | Criticità |
-|---|-----------|-------|-----------|
-| M1 | Elenco macchine/attrezzature utilizzate | All. XV 3.2.1f | CRITICO |
-| M2 | Dichiarazione CE per ogni macchina | D.Lgs. 22/2023 (ex DPR 459/1996) | CRITICO |
-| M3 | Registro verifiche/manutenzione | Art. 71 D.Lgs. 81/08 | IMPORTANTE |
-| M4 | Operatori abilitati (patentini) per gru, carrelli, PLE | Acc. 22/02/2012 | CRITICO |
+### I — DURATA E CRONOPROGRAMMA (punto 2.1.2 lett. i)
+- I1: durata prevista delle lavorazioni
+- I2: durata delle fasi di lavoro
+- I3: durata delle sottofasi (se complessità lo richiede)
+- I4: entità presunta cantiere in UOMINI-GIORNO
 
-### SEZIONE N — SOSTANZE PERICOLOSE (All. XV punto 3.2.1 lett. g)
-| # | Requisito | Norma | Criticità |
-|---|-----------|-------|-----------|
-| N1 | Elenco sostanze/preparati pericolosi utilizzati | All. XV 3.2.1g | CRITICO |
-| N2 | SDS (Schede Dati Sicurezza) disponibili in cantiere | Reg. REACH 1907/2006 | CRITICO |
-| N3 | Misure protezione per ogni sostanza | Art. 222-232 D.Lgs. 81/08 | CRITICO |
+### L — TAVOLE ESPLICATIVE (punto 2.1.4)
+- L1: almeno una PLANIMETRIA (obbligatoria)
+- L2: profilo altimetrico (se particolarità opera lo richiede)
+- L3: descrizione caratteristiche idrogeologiche o rinvio a relazione (se applicabile)
 
-### SEZIONE O — VALUTAZIONE RISCHI SPECIFICI (All. XV punto 3.2.1 lett. h)
-| # | Requisito | Norma | Criticità |
-|---|-----------|-------|-----------|
-| O1 | Valutazione rischi SPECIFICA per le attività dell'impresa | All. XV 3.2.1h | CRITICO |
-| O2 | Rischi specifici delle lavorazioni proprie (non generici) | All. XV 3.2.1h | CRITICO |
-| O3 | Misure prevenzione specifiche (non copia-incolla generica) | All. XV 3.2.1h | CRITICO |
-| O4 | DPI specifici per ogni rischio con norma EN | All. VIII D.Lgs. 81/08 | CRITICO |
-| O5 | Procedure operative specifiche | All. XV 3.2.1l | CRITICO |
+### M — STIMA COSTI SICUREZZA (punto 2.1.2 lett. l + punto 4.1)
+La legge richiede (punto 4.1.1) stima dei costi per:
+- M1: apprestamenti previsti nel PSC (lett. a)
+- M2: misure preventive/protettive e DPI per lavorazioni interferenti (lett. b)
+- M3: impianti di terra, protezione scariche, antincendio, evacuazione fumi (lett. c)
+- M4: mezzi e servizi protezione collettiva (lett. d)
+- M5: procedure PSC per motivi sicurezza (lett. e)
+- M6: interventi per sfasamento spaziale/temporale lavorazioni interferenti (lett. f)
+- M7: misure coordinamento uso comune apprestamenti (lett. g)
+- M8: stima CONGRUA, ANALITICA per voci singole (punto 4.1.3)
+- M9: costi NON ASSOGGETTATI A RIBASSO (punto 4.1.4 — CRITICO)
+
+SANZIONE mancanza/inadeguatezza stima costi: art. 157 co.1 lett. b
 
 ---
 
-## REGOLE DI VERIFICA CONGRUITÀ POS-PSC
+## PARTE B — REQUISITI MINIMI POS
+### Fonte: Allegato XV, punto 3.2.1 D.Lgs. 81/2008
 
-### Elementi che DEVONO essere coerenti tra POS e PSC
-1. **Identità cantiere**: indirizzo, committente, date lavori devono coincidere
-2. **Attività impresa**: il POS deve descrivere SOLO le attività assegnate nel PSC a quella impresa
-3. **Periodo intervento**: le date nel POS devono rientrare nel cronoprogramma PSC
-4. **Aree di lavoro**: le aree nel POS devono corrispondere a quelle assegnate nel PSC
-5. **Rischi interferenza**: il POS deve recepire le prescrizioni del PSC per le interferenze
-6. **DPI coordinamento**: i DPI del POS devono essere almeno equivalenti a quelli prescritti dal PSC
-7. **Procedure coordinamento**: il POS deve citare e rispettare le procedure del PSC
-8. **Costi sicurezza**: il POS non può ridurre i costi sicurezza rispetto alle quote PSC
-9. **Segnaletica**: il POS deve rispettare il sistema di segnaletica definito nel PSC
-10. **Gestione emergenze**: il POS deve recepire il piano emergenze del PSC
+Il POS deve contenere ALMENO (testo letterale della legge):
 
-### Incongruenze CRITICHE (rendono il POS invalido)
-- Attività nel POS non previste dal PSC senza aggiornamento PSC
-- Date POS fuori dal periodo PSC senza proroga autorizzata
-- Mancato recepimento prescrizioni rischi interferenza PSC
-- DPI POS inferiori a quelli obbligatori prescritti dal PSC
-- Piano emergenze POS contraddicente quello PSC
+### N — DATI IDENTIFICATIVI IMPRESA (punto 3.2.1 lett. a)
+- N1: nominativo del datore di lavoro (lett. a n.1)
+- N2: indirizzi e riferimenti telefonici sede legale (lett. a n.1)
+- N3: riferimenti telefonici uffici di cantiere (lett. a n.1)
+- N4: specifica attività e singole lavorazioni in cantiere (lett. a n.2)
+- N5: lavorazioni dei lavoratori autonomi subaffidatari (lett. a n.2)
+- N6: nominativo addetti pronto soccorso (lett. a n.3)
+- N7: nominativo addetti antincendio ed evacuazione (lett. a n.3)
+- N8: nominativo addetti gestione emergenze (lett. a n.3)
+- N9: nominativo RLS aziendale o territoriale ove eletto/designato (lett. a n.3)
+- N10: nominativo medico competente OVE PREVISTO (lett. a n.4)
+  NOTA: il MC è previsto quando ci sono rischi soggetti a sorveglianza sanitaria obbligatoria
+  (art. 41 — rumore >85dB, vibrazioni, polveri silice, rischio chimico, movimentazione carichi,
+  lavori in quota prolungati, videoterminali >20h/settimana, ecc.)
+  Per imprese EDILI e ELETTRICHE la sorveglianza sanitaria è SEMPRE obbligatoria.
+- N11: nominativo RSPP (lett. a n.5)
+- N12: nominativo direttore tecnico di cantiere (lett. a n.6)
+- N13: nominativo capocantiere (lett. a n.6)
+- N14: numero e qualifiche lavoratori dipendenti (lett. a n.7)
+- N15: numero e qualifiche lavoratori autonomi operanti per conto impresa (lett. a n.7)
 
-### Incongruenze IMPORTANTI (da sanare prima dell'inizio lavori)
-- Aree di lavoro non corrispondenti al layout PSC
-- Procedure coordinamento PSC non citate nel POS
-- Cronoprogramma POS non allineato al Gantt PSC
+### O — MANSIONI DI SICUREZZA (punto 3.2.1 lett. b)
+- O1: specifiche mansioni inerenti la sicurezza svolte da ogni figura nominata
 
-### Incongruenze CONSIGLIO (da valutare)
-- Livello di dettaglio POS inferiore alle aspettative PSC
-- Misure aggiuntive nel PSC non riprese nel POS (opportuno includerle)
+### P — DESCRIZIONE ATTIVITÀ (punto 3.2.1 lett. c)
+- P1: descrizione attività di cantiere
+- P2: modalità organizzative
+- P3: turni di lavoro
 
----
+### Q — OPERE PROVVISIONALI E MACCHINE (punto 3.2.1 lett. d)
+- Q1: elenco ponteggi
+- Q2: elenco ponti su ruote a torre
+- Q3: elenco altre opere provvisionali di notevole importanza
+- Q4: elenco macchine utilizzate
+- Q5: elenco impianti utilizzati
+Per ogni macchina: dichiarazione conformità CE obbligatoria (D.Lgs. 22/2023, ex DPR 459/1996)
 
-## SANZIONI APPLICABILI (aggiornate a 2026)
+### R — SOSTANZE PERICOLOSE (punto 3.2.1 lett. e)
+- R1: elenco sostanze e miscele pericolose utilizzate
+- R2: schede di sicurezza (SDS) per ogni sostanza pericolosa — OBBLIGATORIE
+  (Reg. CE 1907/2006 REACH + Reg. CE 1272/2008 CLP)
 
-### Violazioni PSC
-- **PSC mancante** quando obbligatorio: Art. 100 co.1 + Art. 157 co.1 lett.b → arresto 3-6 mesi o ammenda €2.740-7.014 (committente/RL)
-- **PSC incompleto**: Art. 100 + Art. 157 → ammenda €2.000-5.000
-- **Costi sicurezza non quantificati**: Art. 100 co.1 + Art. 157 → ammenda €2.740-7.014
-- **CSP senza requisiti**: Art. 98 + Art. 157 co.1 lett.c → arresto fino 6 mesi o ammenda €2.740-7.014
+### S — VALUTAZIONE RUMORE (punto 3.2.1 lett. f)
+- S1: esito del rapporto di valutazione del rumore (D.Lgs. 81/2008 artt. 190-191)
 
-### Violazioni POS
-- **POS mancante**: Art. 101 co.1 + Art. 157 co.1 lett.b → arresto fino 6 mesi o ammenda €2.740-7.014 (DL impresa)
-- **POS non conforme al PSC**: Art. 101 + Art. 157 → ammenda €2.000-5.000
-- **Lavoratori senza formazione**: Art. 37 + Art. 55 → arresto 2-4 mesi o ammenda €1.315-5.699
-- **Lavoratori senza idoneità sanitaria**: Art. 41 + Art. 55 → arresto 2-4 mesi o ammenda €2.195-4.384
-- **Macchine senza dichiarazione CE**: D.Lgs. 22/2023 → ammenda fino €25.000 per macchina
+### T — MISURE PREVENTIVE E PROTETTIVE (punto 3.2.1 lett. g)
+- T1: individuazione misure preventive e protettive INTEGRATIVE rispetto al PSC
+- T2: misure adottate in relazione ai rischi SPECIFICI delle proprie lavorazioni
 
-### Aggiornamenti sanzionatori 2024-2026
-- L. 56/2024: incremento sanzioni del 15% per recidiva entro 3 anni
-- D.Lgs. 56/2023 (Codice Appalti): maggiorazione 20% sanzioni per appalti pubblici
-- Nota MLPS 2025: esteso obbligo patentino imprese art. 27 D.Lgs. 81/08 (entrato in vigore 1/10/2024)
+### U — PROCEDURE COMPLEMENTARI (punto 3.2.1 lett. h)
+- U1: procedure complementari e di dettaglio richieste dal PSC
 
----
+### V — DPI (punto 3.2.1 lett. i)
+- V1: elenco DPI forniti ai lavoratori
+(raccomandato: norme EN di riferimento per ogni DPI)
 
-## FORMATO OUTPUT VERIFICA
-
-### Struttura JSON risposta verifica PSC o POS
-```json
-{
-  "documento_analizzato": "PSC/POS",
-  "punteggio_conformita": 0-100,
-  "giudizio_sintetico": "CONFORME / NON CONFORME / CONFORME CON RISERVE",
-  "non_conformita": [
-    {
-      "id": "C1",
-      "sezione": "Analisi Rischi",
-      "descrizione": "Descrizione chiara e specifica della non conformità",
-      "norma_violata": "All. XV punto 2.1.2c — D.Lgs. 81/2008",
-      "severita": "CRITICO/IMPORTANTE/CONSIGLIO",
-      "sanzione_applicabile": "Art. 157 co.1 lett.b — arresto/ammenda",
-      "testo_trovato": "Testo presente nel documento (se parzialmente presente)",
-      "testo_corretto": "Testo che dovrebbe essere presente o integrazione richiesta"
-    }
-  ],
-  "punti_conformi": [
-    {
-      "id": "A1",
-      "sezione": "Identificazione Opera",
-      "descrizione": "Conformità rilevata"
-    }
-  ],
-  "riepilogo": {
-    "totale_verifiche": 0,
-    "critici": 0,
-    "importanti": 0,
-    "consigli": 0,
-    "conformi": 0
-  }
-}
-```
-
-### Struttura JSON risposta verifica congruità POS-PSC
-```json
-{
-  "pos_analizzato": "nome POS",
-  "psc_riferimento": "nome PSC",
-  "incongruenze": [
-    {
-      "id": "INC-01",
-      "elemento": "Periodo intervento",
-      "valore_psc": "15/03/2025 - 30/06/2025",
-      "valore_pos": "01/04/2025 - 31/07/2025",
-      "descrizione": "Il POS indica fine lavori 31/07/2025, successiva alla fine prevista nel PSC (30/06/2025) senza proroga autorizzata",
-      "severita": "CRITICO",
-      "modifica_richiesta": "Aggiornare la data fine a 30/06/2025 o produrre atto di proroga PSC",
-      "sezione_pos_da_modificare": "Sezione 3 — Periodo di intervento"
-    }
-  ],
-  "elementi_congruenti": [...],
-  "giudizio": "CONGRUENTE / NON CONGRUENTE / CONGRUENTE CON RISERVE"
-}
-```
+### Z — FORMAZIONE E INFORMAZIONE (punto 3.2.1 lett. l)
+- Z1: documentazione informazione fornita ai lavoratori
+- Z2: documentazione formazione fornita ai lavoratori
+  Formazione obbligatoria (Accordo Stato-Regioni 21/12/2011):
+  - Formazione generale: 4h (lavoratori settore edile)
+  - Formazione specifica rischio alto: 12h (settore edile = rischio alto)
+  - Aggiornamento: 6h ogni 5 anni
 
 ---
 
-## ISTRUZIONI OPERATIVE
+## PARTE C — REQUISITI AGGIUNTIVI (non Allegato XV ma obbligatori)
 
-1. **Analizza l'intero documento** prima di emettere giudizi
-2. **Cita sempre il testo trovato** nel documento quando segnali una non conformità parziale
-3. **Non inventare** contenuti non presenti nel documento
-4. **Per ogni CRITICO** indica sempre la sanzione applicabile
-5. **Suggerisci sempre il testo corretto** da inserire per sanare la non conformità
-6. **Il punteggio di conformità** si calcola: (verifiche conformi / totale verifiche) × 100
-7. **Giudizio sintetico**:
-   - CONFORME: nessun CRITICO, max 3 IMPORTANTI
-   - CONFORME CON RISERVE: 1-3 CRITICI o 4+ IMPORTANTI
-   - NON CONFORME: 4+ CRITICI
-8. **Per il Reg. UE 2023/2869**: qualsiasi documento relativo a ristrutturazioni di edifici ante 1992 DEVE citare il nuovo limite 1 fibra/cm³
-9. **Per il patentino imprese (art. 27, in vigore 1/10/2024)**: verificare che le imprese abbiano punteggio iniziale ≥15 (obbligatorio per tutti i cantieri dal 1/10/2024)
+### PATENTINO IMPRESE (art. 27 D.Lgs. 81/2008 — obbligatorio dal 1/10/2024)
+- Punteggio iniziale 15/15 — attestazione INL obbligatoria per imprese nei cantieri
+- SANZIONE omessa indicazione: importante per la verifica del POS
+
+### SORVEGLIANZA SANITARIA LAVORATORI (art. 41 D.Lgs. 81/2008)
+Periodicità visite mediche:
+- Annuale: rischio alto (rumore, vibrazioni, polveri silice, agenti chimici pericolosi)
+- Biennale: rischio medio (movimentazione carichi, lavori in quota)
+- Quadriennale: rischio basso
+Per imprese EDILI: periodicità ANNUALE per la maggior parte dei lavoratori
+Visita medica scaduta = lavoratore NON IDONEO = presenza in cantiere VIETATA
+
+### IDONEITÀ MACCHINE
+- Dichiarazione CE obbligatoria per tutte le macchine (D.Lgs. 22/2023)
+- Registro verifiche periodiche: obbligatorio per apparecchi di sollevamento (INAIL)
+- Gru a torre: verifica annuale INAIL obbligatoria (D.M. 11/04/2011)
+- Ponteggi: PIMUS obbligatorio (All. XXII D.Lgs. 81/2008)
+
+### AMIANTO (D.Lgs. 257/2006 + Reg. UE 2023/2869 — limite 1 fibra/cm³ dal 13/12/2023)
+- Edifici ante 1993: verifica presenza amianto obbligatoria prima di qualsiasi intervento
+- Bonifica prima di demolizioni/ristrutturazioni
+- Notifica ASL obbligatoria
+
+### COSTI SICUREZZA (punto 4.1.4 Allegato XV — CRITICO)
+Testo legale esatto: "I costi della sicurezza così individuati, sono compresi nell'importo totale
+dei lavori, ed individuano la parte del costo dell'opera da NON ASSOGGETTARE A RIBASSO
+nelle offerte delle imprese esecutrici."
+SANZIONE violazione: art. 157 co.1 lett. b — l'omissione è reato
+
+---
+
+## PARTE D — TABELLA SANZIONI (aggiornata L. 56/2024 — +15% per recidiva)
+
+| Violazione | Articolo | Sanzione |
+|---|---|---|
+| PSC mancante/incompleto | Art. 157 co.1 lett. b | Arresto 3-6 mesi o ammenda €2.740-7.014 |
+| POS mancante/incompleto | Art. 157 co.2 | Arresto fino 1 mese o ammenda €614,25-2.457 |
+| CSP/CSE non qualificato | Art. 157 co.1 lett. b | Arresto 3-6 mesi o ammenda €2.740-7.014 |
+| Sorveglianza sanitaria omessa | Art. 55 co.5 lett. c | Arresto 3-6 mesi o ammenda €2.740-7.014 |
+| Formazione omessa | Art. 55 co.5 lett. c | Arresto 3-6 mesi o ammenda €2.740-7.014 |
+| Costi sicurezza soggetti a ribasso | Art. 157 co.1 lett. b | Arresto 3-6 mesi o ammenda €2.740-7.014 |
+| Macchina senza CE | Art. 87 co.2 lett. c | Ammenda €1.096-4.384 per ogni macchina |
+| DPI non forniti | Art. 87 co.2 lett. a | Arresto 3-6 mesi o ammenda €2.740-7.014 |
+
+---
+
+## PARTE E — REGOLE DI GIUDIZIO
+
+**CONFORME**: 0 critici, massimo 3 importanti, punteggio ≥ 85%
+**CONFORME CON RISERVE**: 1-3 critici OPPURE 4-8 importanti, punteggio 60-84%
+**NON CONFORME**: 4+ critici OPPURE 9+ importanti OPPURE punteggio < 60%
+
+**Severità non conformità**:
+- CRITICO: elemento OBBLIGATORIO per legge assente o gravemente carente — sanzione penale
+- IMPORTANTE: elemento obbligatorio presente ma incompleto, o elemento raccomandato assente
+- CONSIGLIO: miglioramento non obbligatorio ma raccomandato dalla buona prassi
+
+**Punteggio conformità**: (n° requisiti soddisfatti / n° requisiti applicabili) × 100
+I requisiti non applicabili (es. galleria per cantiere in superficie) non entrano nel calcolo.

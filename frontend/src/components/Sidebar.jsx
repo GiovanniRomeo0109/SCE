@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 const links = [
   { section: 'Documenti' },
   { to: '/',               icon: '🏠', label: 'Dashboard' },
+  { to: '/verifica', icon: '🔍', label: 'Verifica Documenti' },
   { to: '/nuovo-progetto', icon: '🤖', label: 'Nuovo con AI', highlight: true },
   { to: '/nuovo',          icon: '➕', label: 'Nuovo manuale' },
   { to: '/storico',        icon: '📁', label: 'Storico' },
