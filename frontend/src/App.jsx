@@ -1,5 +1,6 @@
-import React, { useState, useCallback, createContext, useContext } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useState, useContext, createContext } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
 import Sidebar from './components/Sidebar';
 import Notification from './components/Notification';
 import Dashboard from './pages/Dashboard';
@@ -15,18 +16,49 @@ import WizardPOS from './components/WizardPOS';
 import VerificaDocumenti from './pages/VerificaDocumenti';
 
 export const NotifyCtx = createContext(null);
-export const useNotify = () => useContext(NotifyCtx);
+
+const NotifyContext = createContext(() => {});
+export const useNotify = () => useContext(NotifyContext);
 
 export default function App() {
-  const [notif, setNotif] = useState(null);
-  const notify = useCallback((message, type = 'success') => setNotif({ message, type }), []);
+  const [notify, setNotify] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem('sce_token'));
+
+  const showNotify = (msg, type = 'info') => {
+    setNotify({ msg, type });
+    setTimeout(() => setNotify(null), 3500);
+  };
+
+  const handleLogin = (data) => {
+    setToken(data.access_token);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('sce_token');
+    localStorage.removeItem('sce_user');
+    setToken(null);
+  };
+
+  // Se non autenticato → mostra solo Login
+  if (!token) {
+    return (
+      <NotifyContext.Provider value={showNotify}>
+        <Login onLogin={handleLogin} />
+      </NotifyContext.Provider>
+    );
+  }
 
   return (
-    <BrowserRouter>
-      <NotifyCtx.Provider value={notify}>
-        <div className="layout">
-          <Sidebar />
+      <NotifyContext.Provider value={showNotify}>
+  <BrowserRouter>
+    
+         {notify && (
+          <div className={`toast toast-${notify.type}`}>{notify.msg}</div>
+        )}
+        <div className="app-layout">
+          <Sidebar onLogout={handleLogout} />
           <main className="main-content">
+
             <Routes>
               <Route path="/"                    element={<Dashboard />} />
               <Route path="/nuovo"               element={<NuovoDocumento />} />
@@ -39,13 +71,16 @@ export default function App() {
               <Route path="/imprese"             element={<AnagraficaImprese />} />
               <Route path="/coordinatori"        element={<AnagraficaCoordinatori />} />
               <Route path="/verifica" element={<VerificaDocumenti />} />
+               <Route path="/" element={<Navigate to="/wizard" />} />
+              {/* ... */}
+
             </Routes>
           </main>
         </div>
         {notif && (
           <Notification message={notif.message} type={notif.type} onClose={() => setNotif(null)} />
         )}
-      </NotifyCtx.Provider>
-    </BrowserRouter>
+      </BrowserRouter>
+    </NotifyContext.Provider>
   );
 }

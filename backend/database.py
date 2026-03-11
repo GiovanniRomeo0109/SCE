@@ -112,6 +112,16 @@ def init_db():
             data_generazione    TEXT,
             created_at          TEXT    DEFAULT (datetime('now'))
         );
+                      
+         CREATE TABLE IF NOT EXISTS usage_log (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            username        TEXT    NOT NULL,
+            giorno          TEXT    NOT NULL,
+            tipo_operazione TEXT    NOT NULL,
+            created_at      TEXT    DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_usage_log_user_giorno
+            ON usage_log (username, giorno);
     """)
 
     conn.commit()

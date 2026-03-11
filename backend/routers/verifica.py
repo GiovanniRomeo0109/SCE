@@ -3,11 +3,13 @@ Router verifica conformità PSC e POS — D.Lgs. 81/2008 Allegato XV
 Approccio due passaggi: estrazione → verifica sistematica
 Fix: max_tokens=16000, parser robusto, checklist basata su testo legale esatto
 """
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Depends
 from typing import List, Optional
 import anthropic
 import os, json, sqlite3, base64, re, logging, pathlib
 from datetime import datetime
+from auth import get_current_user
+from usage_limit import require_credits
 
 router = APIRouter()
 
@@ -585,6 +587,7 @@ def verifica_documento(doc_info: dict, tipo: str, client: anthropic.Anthropic) -
 async def verifica_psc(
     file: UploadFile = File(...),
     nome_cantiere: str = Form(default="Cantiere"),
+    user: dict = Depends(require_credits("verifica_psc")),
 ):
     doc_info = leggi_documento(await file.read(), file.filename)
     risultato = verifica_documento(doc_info, "psc", anthropic.Anthropic())
@@ -599,6 +602,7 @@ async def verifica_psc(
 async def verifica_pos(
     files: List[UploadFile] = File(...),
     nome_cantiere: str = Form(default="Cantiere"),
+    user: dict = Depends(require_credits("verifica_pos")),
 ):
     if len(files) > 5:
         raise HTTPException(400, "Massimo 5 POS per volta.")
@@ -621,6 +625,7 @@ async def verifica_congruita(
     psc: UploadFile = File(...),
     pos_files: List[UploadFile] = File(...),
     nome_cantiere: str = Form(default="Cantiere"),
+    user: dict = Depends(require_credits("verifica_congruita")),
 ):
     if len(pos_files) > 5:
         raise HTTPException(400, "Massimo 5 POS per volta.")
@@ -759,7 +764,10 @@ Rispondi SOLO con JSON valido:
 # ══════════════════════════════════════════════════════════════════════════════
 
 @router.post("/genera-verbale")
-async def genera_verbale(payload: dict):
+async def genera_verbale(
+    payload: dict,
+    user: dict = Depends(get_current_user),
+):
     from services.pdf_generator_verifica import genera_verbale_incongruenze
     output_dir = os.path.join(os.path.dirname(__file__), "../output")
     os.makedirs(output_dir, exist_ok=True)

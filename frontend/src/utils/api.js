@@ -1,54 +1,84 @@
-import axios from 'axios';
+/**
+ * api.js aggiornato per Railway
+ * - URL relativo (funziona sia in locale che in produzione)
+ * - Aggiunge Bearer token a tutte le chiamate
+ * - Gestisce 401 (redirect al login) e 429 (limite raggiunto)
+ */
 
-// Il proxy in package.json manda tutto a http://localhost:8000
-const api = axios.create({ baseURL: '/api' });
+// In produzione (Railway) le API sono sullo stesso dominio → URL relativo
+// In sviluppo locale → punta a localhost:8000
+const BASE_URL = process.env.NODE_ENV === 'production'
+  ? ''
+  : 'http://localhost:8000';
 
-// ── ANAGRAFICA ──────────────────────────────────────────────
-export const getCommittenti    = () => api.get('/anagrafica/committenti');
-export const createCommittente = (d) => api.post('/anagrafica/committenti', d);
-export const updateCommittente = (id, d) => api.put(`/anagrafica/committenti/${id}`, d);
-export const deleteCommittente = (id) => api.delete(`/anagrafica/committenti/${id}`);
+function getToken() {
+  return localStorage.getItem('sce_token');
+}
 
-export const getImprese    = () => api.get('/anagrafica/imprese');
-export const createImpresa = (d) => api.post('/anagrafica/imprese', d);
-export const updateImpresa = (id, d) => api.put(`/anagrafica/imprese/${id}`, d);
-export const deleteImpresa = (id) => api.delete(`/anagrafica/imprese/${id}`);
+export function logout() {
+  localStorage.removeItem('sce_token');
+  localStorage.removeItem('sce_user');
+  window.location.href = '/';
+}
 
-export const getCoordinatori    = () => api.get('/anagrafica/coordinatori');
-export const createCoordinatore = (d) => api.post('/anagrafica/coordinatori', d);
-export const updateCoordinatore = (id, d) => api.put(`/anagrafica/coordinatori/${id}`, d);
-export const deleteCoordinatore = (id) => api.delete(`/anagrafica/coordinatori/${id}`);
+export async function apiFetch(path, options = {}) {
+  const token = getToken();
+  const headers = {
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+  // Non impostare Content-Type per FormData (lo fa il browser)
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+  }
+  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+  if (res.status === 401) {
+    logout();
+    throw new Error('Sessione scaduta — effettua di nuovo il login');
+  }
+  if (res.status === 429) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || 'Limite giornaliero raggiunto');
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || `Errore ${res.status}`);
+  return { data, status: res.status };
+}
 
-// ── AGENTE AI ───────────────────────────────────────────────
-export const checkObbligatorieta = (d) => api.post('/agent/check-obbligatorieta', d);
-export const generaContenutoAI   = (d) => api.post('/agent/genera-contenuto', d);
+// ── Autenticazione ────────────────────────────────────────────────────────────
+export const getCurrentUser = () => apiFetch('/api/auth/me');
+export const getUsageStats  = () => apiFetch('/api/auth/usage');
 
-// ── DOCUMENTI ───────────────────────────────────────────────
-export const generaDocumento = (d) => api.post('/documents/genera', d);
-export const getStorico      = () => api.get('/documents/storico');
-export const deleteDocumento = (id) => api.delete(`/documents/storico/${id}`);
-export const getDownloadUrl  = (id) => `/documents/download/${id}`;
-// ── ESTRAZIONE AI ─────────────────────────────────────────
-export const estraiDati = (formData) =>
-  api.post('/estrazione/analizza', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    timeout: 120000, // 2 minuti — analisi può essere lenta
-  });
-  // Aggiungi questa riga alla fine
-export const analisiRischi = (payload) => api.post('/agent/analisi-rischi', payload);
+// ── Storico ───────────────────────────────────────────────────────────────────
+export const getStorico       = ()   => apiFetch('/api/documents/storico');
+export const deleteDocumento  = (id) => apiFetch(`/api/documents/${id}`, { method: 'DELETE' });
 
+// ── Anagrafica ────────────────────────────────────────────────────────────────
+export const getCommittenti  = ()     => apiFetch('/api/anagrafica/committenti');
+export const getImprese      = ()     => apiFetch('/api/anagrafica/imprese');
+export const getCoordinatori = ()     => apiFetch('/api/anagrafica/coordinatori');
+export const saveCommittente = (data) => apiFetch('/api/anagrafica/committenti', { method: 'POST', body: JSON.stringify(data) });
+export const saveImpresa     = (data) => apiFetch('/api/anagrafica/imprese',     { method: 'POST', body: JSON.stringify(data) });
+export const saveCoordinatore= (data) => apiFetch('/api/anagrafica/coordinatori',{ method: 'POST', body: JSON.stringify(data) });
+
+// ── Agent ─────────────────────────────────────────────────────────────────────
+export const checkObbligatorieta = (data) =>
+  apiFetch('/api/agent/check-obbligatorieta', { method: 'POST', body: JSON.stringify(data) });
+export const generaContenuto = (data) =>
+  apiFetch('/api/agent/genera-contenuto', { method: 'POST', body: JSON.stringify(data) });
+export const analisiRischi = (data) =>
+  apiFetch('/agent/analisi-rischi', { method: 'POST', body: JSON.stringify(data) });
+
+// ── Estrazione ────────────────────────────────────────────────────────────────
+export const estraiDocumento = (formData) =>
+  apiFetch('/api/estrazione/estrai', { method: 'POST', body: formData });
+
+// ── Verifica ──────────────────────────────────────────────────────────────────
 export const verificaPsc = (formData) =>
-  api.post('/verifica/verifica-psc', formData,
-    { headers: { 'Content-Type': 'multipart/form-data' } });
-
+  apiFetch('/api/verifica/verifica-psc', { method: 'POST', body: formData });
 export const verificaPos = (formData) =>
-  api.post('/verifica/verifica-pos', formData,
-    { headers: { 'Content-Type': 'multipart/form-data' } });
-
+  apiFetch('/api/verifica/verifica-pos', { method: 'POST', body: formData });
 export const verificaCongruita = (formData) =>
-  api.post('/verifica/verifica-congruita', formData,
-    { headers: { 'Content-Type': 'multipart/form-data' } });
-
-export const generaVerbale = (payload) =>
-  api.post('/verifica/genera-verbale', payload);
-export default api;
+  apiFetch('/api/verifica/verifica-congruita', { method: 'POST', body: formData });
+export const generaVerbale = (data) =>
+  apiFetch('/api/verifica/genera-verbale', { method: 'POST', body: JSON.stringify(data) });
