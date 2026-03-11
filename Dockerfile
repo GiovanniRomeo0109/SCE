@@ -3,7 +3,7 @@ FROM node:20-alpine AS frontend-build
 WORKDIR /app/frontend
 
 COPY frontend/package*.json ./
-RUN npm ci --silent
+RUN npm install --silent
 
 COPY frontend/ ./
 # In produzione l'API è sullo stesso dominio — nessun URL hardcoded necessario
