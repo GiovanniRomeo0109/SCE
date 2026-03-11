@@ -106,3 +106,18 @@ export const verificaCongruita = (formData) =>
   apiFetch('/api/verifica/verifica-congruita', { method: 'POST', body: formData });
 export const generaVerbale = (data) =>
   apiFetch('/api/verifica/genera-verbale', { method: 'POST', body: JSON.stringify(data) });
+// ── Default export (compatibilità con import api from '../utils/api') ─────────
+const api = {
+  apiFetch, logout, getCurrentUser, getUsageStats,
+  getStorico, deleteDocumento,
+  getCommittenti, getImprese, getCoordinatori,
+  saveCommittente, saveImpresa, saveCoordinatore,
+  createCommittente, createImpresa, createCoordinatore,
+  updateCommittente, updateImpresa, updateCoordinatore,
+  deleteCommittente, deleteImpresa, deleteCoordinatore,
+  checkObbligatorieta, generaContenuto, analisiRischi,
+  generaDocumento, generaContenutoAI,
+  estraiDocumento, estraiDati,
+  verificaPsc, verificaPos, verificaCongruita, generaVerbale,
+};
+export default api;
