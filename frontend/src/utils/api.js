@@ -54,12 +54,28 @@ export const getStorico       = ()   => apiFetch('/api/documents/storico');
 export const deleteDocumento  = (id) => apiFetch(`/api/documents/${id}`, { method: 'DELETE' });
 
 // ── Anagrafica ────────────────────────────────────────────────────────────────
-export const getCommittenti   = ()     => apiFetch('/api/anagrafica/committenti');
-export const getImprese       = ()     => apiFetch('/api/anagrafica/imprese');
-export const getCoordinatori  = ()     => apiFetch('/api/anagrafica/coordinatori');
-export const saveCommittente  = (data) => apiFetch('/api/anagrafica/committenti',  { method: 'POST', body: JSON.stringify(data) });
-export const saveImpresa      = (data) => apiFetch('/api/anagrafica/imprese',      { method: 'POST', body: JSON.stringify(data) });
-export const saveCoordinatore = (data) => apiFetch('/api/anagrafica/coordinatori', { method: 'POST', body: JSON.stringify(data) });
+export const getCommittenti   = ()         => apiFetch('/api/anagrafica/committenti');
+export const getImprese       = ()         => apiFetch('/api/anagrafica/imprese');
+export const getCoordinatori  = ()         => apiFetch('/api/anagrafica/coordinatori');
+
+// CREATE
+export const saveCommittente  = (data)     => apiFetch('/api/anagrafica/committenti',       { method: 'POST',   body: JSON.stringify(data) });
+export const saveImpresa      = (data)     => apiFetch('/api/anagrafica/imprese',           { method: 'POST',   body: JSON.stringify(data) });
+export const saveCoordinatore = (data)     => apiFetch('/api/anagrafica/coordinatori',      { method: 'POST',   body: JSON.stringify(data) });
+// Alias create* → save* (usati da alcuni componenti)
+export const createCommittente  = (data)   => apiFetch('/api/anagrafica/committenti',       { method: 'POST',   body: JSON.stringify(data) });
+export const createImpresa      = (data)   => apiFetch('/api/anagrafica/imprese',           { method: 'POST',   body: JSON.stringify(data) });
+export const createCoordinatore = (data)   => apiFetch('/api/anagrafica/coordinatori',      { method: 'POST',   body: JSON.stringify(data) });
+
+// UPDATE
+export const updateCommittente  = (id, data) => apiFetch(`/api/anagrafica/committenti/${id}`,  { method: 'PUT',    body: JSON.stringify(data) });
+export const updateImpresa      = (id, data) => apiFetch(`/api/anagrafica/imprese/${id}`,      { method: 'PUT',    body: JSON.stringify(data) });
+export const updateCoordinatore = (id, data) => apiFetch(`/api/anagrafica/coordinatori/${id}`, { method: 'PUT',    body: JSON.stringify(data) });
+
+// DELETE
+export const deleteCommittente  = (id)     => apiFetch(`/api/anagrafica/committenti/${id}`,    { method: 'DELETE' });
+export const deleteImpresa      = (id)     => apiFetch(`/api/anagrafica/imprese/${id}`,        { method: 'DELETE' });
+export const deleteCoordinatore = (id)     => apiFetch(`/api/anagrafica/coordinatori/${id}`,   { method: 'DELETE' });
 
 // ── Agent ─────────────────────────────────────────────────────────────────────
 export const checkObbligatorieta = (data) =>
@@ -68,25 +84,25 @@ export const generaContenuto = (data) =>
   apiFetch('/api/agent/genera-contenuto', { method: 'POST', body: JSON.stringify(data) });
 export const analisiRischi = (data) =>
   apiFetch('/agent/analisi-rischi', { method: 'POST', body: JSON.stringify(data) });
-
-// ── Agent (aggiunte mancanti) ─────────────────────────────────────────────────
 export const generaDocumento = (data) =>
   apiFetch('/api/agent/genera-documento', { method: 'POST', body: JSON.stringify(data) });
-
-// Alias di generaContenuto — usato da WizardPSC e WizardPOS
+// Alias usato da WizardPSC e WizardPOS
 export const generaContenutoAI = (data) =>
   apiFetch('/api/agent/genera-contenuto', { method: 'POST', body: JSON.stringify(data) });
 
 // ── Estrazione ────────────────────────────────────────────────────────────────
 export const estraiDocumento = (formData) =>
   apiFetch('/api/estrazione/estrai', { method: 'POST', body: formData });
+// Alias usato da alcuni componenti
+export const estraiDati = (formData) =>
+  apiFetch('/api/estrazione/estrai', { method: 'POST', body: formData });
 
 // ── Verifica ──────────────────────────────────────────────────────────────────
-export const verificaPsc      = (formData) =>
-  apiFetch('/api/verifica/verifica-psc',       { method: 'POST', body: formData });
-export const verificaPos      = (formData) =>
-  apiFetch('/api/verifica/verifica-pos',       { method: 'POST', body: formData });
+export const verificaPsc = (formData) =>
+  apiFetch('/api/verifica/verifica-psc', { method: 'POST', body: formData });
+export const verificaPos = (formData) =>
+  apiFetch('/api/verifica/verifica-pos', { method: 'POST', body: formData });
 export const verificaCongruita = (formData) =>
   apiFetch('/api/verifica/verifica-congruita', { method: 'POST', body: formData });
-export const generaVerbale    = (data) =>
-  apiFetch('/api/verifica/genera-verbale',     { method: 'POST', body: JSON.stringify(data) });
+export const generaVerbale = (data) =>
+  apiFetch('/api/verifica/genera-verbale', { method: 'POST', body: JSON.stringify(data) });
