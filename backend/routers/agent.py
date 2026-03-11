@@ -4,6 +4,7 @@ from typing import Optional, List
 import anthropic
 import os
 import json
+import sqlite3
 
 router = APIRouter()
 
@@ -35,6 +36,14 @@ class ObbligatorietaRequest(BaseModel):
 class ContenutoRequest(BaseModel):
     tipo_documento: str
     form_data: dict
+
+
+class GeneraDocumentoRequest(BaseModel):
+    tipo_documento: str          # psc | pos | notifica_preliminare
+    form_data: dict
+    nome_cantiere: Optional[str] = "Cantiere"
+    contenuto_ai: Optional[dict] = None   # sezioni generate da genera-contenuto
+    impresa_nome: Optional[str] = None    # usato dal POS
 
 
 # ═══════════════════════════════════════════════
@@ -254,6 +263,84 @@ Genera ESCLUSIVAMENTE un oggetto JSON valido con queste chiavi:
         contenuto = {"raw_text": raw}
 
     return {"contenuto": contenuto}
+
+
+# ═══════════════════════════════════════════════
+# GENERA DOCUMENTO FINALE
+# ═══════════════════════════════════════════════
+
+def _get_db():
+    db_path = os.environ.get("DB_PATH", "data/cantieri.db")
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+@router.post("/genera-documento")
+def genera_documento(req: GeneraDocumentoRequest):
+    """
+    Salva il documento finale nel DB e restituisce doc_id.
+    Il frontend usa doc_id per scaricare/visualizzare il documento.
+    """
+    form_json = json.dumps(req.form_data, ensure_ascii=False, indent=2)
+    contenuto_ai_json = json.dumps(req.contenuto_ai or {}, ensure_ascii=False, indent=2)
+
+    titoli = {
+        "psc": "Piano di Sicurezza e Coordinamento (PSC)",
+        "pos": "Piano Operativo di Sicurezza (POS)",
+        "notifica_preliminare": "Notifica Preliminare",
+    }
+    titolo = titoli.get(req.tipo_documento, req.tipo_documento.upper())
+    nome_cantiere = req.nome_cantiere or "Cantiere"
+
+    documento_testo = f"""# {titolo}
+## Cantiere: {nome_cantiere}
+{"## Impresa: " + req.impresa_nome if req.impresa_nome else ""}
+
+---
+
+### DATI GENERALI
+{form_json}
+
+---
+
+### CONTENUTO TECNICO
+{contenuto_ai_json if req.contenuto_ai else "Nessun contenuto AI generato."}
+"""
+
+    try:
+        conn = _get_db()
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS documenti (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                tipo          TEXT    NOT NULL,
+                nome_cantiere TEXT,
+                contenuto     TEXT,
+                form_data     TEXT,
+                stato         TEXT    DEFAULT 'completato',
+                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute(
+            "INSERT INTO documenti (tipo, nome_cantiere, contenuto, form_data, stato) VALUES (?, ?, ?, ?, 'completato')",
+            (req.tipo_documento, nome_cantiere, documento_testo, form_json),
+        )
+        doc_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Errore salvataggio documento: {str(e)}")
+
+    return {
+        "doc_id": doc_id,
+        "tipo_documento": req.tipo_documento,
+        "nome_cantiere": nome_cantiere,
+        "stato": "completato",
+        "messaggio": f"{titolo} generato con successo (ID: {doc_id})",
+    }
+
 
 def carica_skill_rischi() -> str:
     """Carica il file SKILL RISCHI_PSC.md"""
