@@ -32,6 +32,11 @@ def startup():
     init_db()
     print("✅ Database inizializzato")
 
+# ── Healthcheck ───────────────────────────────────────────────────────────────
+@app.get("/health", include_in_schema=False)
+def health():
+    return {"status": "ok"}
+
 # ── API Routers ───────────────────────────────────────────────────────────────
 app.include_router(auth_router,  prefix="/api/auth",      tags=["Auth"])
 app.include_router(agent.router, prefix="/api/agent",     tags=["Agent"])
