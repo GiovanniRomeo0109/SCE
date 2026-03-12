@@ -77,8 +77,8 @@ export default function App() {
             </Routes>
           </main>
         </div>
-        {notif && (
-          <Notification message={notif.message} type={notif.type} onClose={() => setNotif(null)} />
+        {notify && (
+          <Notification message={notify.msg} type={notify.type} onClose={() => setNotify(null)} />
         )}
       </BrowserRouter>
     </NotifyContext.Provider>
