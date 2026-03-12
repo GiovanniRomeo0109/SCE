@@ -12,7 +12,7 @@ export default function Dashboard() {
   const [storico, setStorico] = useState([]);
 
   useEffect(() => {
-    getStorico().then(r => setStorico(r.data)).catch(() => {});
+    getStorico().then(r => { const list = Array.isArray(r) ? r : Array.isArray(r?.data) ? r.data : Array.isArray(r?.documenti) ? r.documenti : []; setStorico(list); }).catch(() => {});
   }, []);
 
   const count = (tipo) => storico.filter(d => d.tipo_documento === tipo).length;
