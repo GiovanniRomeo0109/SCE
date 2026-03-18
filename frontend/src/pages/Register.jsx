@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useNotify } from '../App';
 
 const BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000';
 
 export default function Register({ onLogin }) {
   const notify = useNotify();
-  const navigate = useNavigate();
-  const [form, setForm] = useState({ username: '', email: '', nome_cognome: '', password: '', conferma: '' });
+  const [form, setForm] = useState({ nome_cognome: '', email: '', password: '', conferma: '' });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -16,11 +15,9 @@ export default function Register({ onLogin }) {
   const validate = () => {
     const e = {};
     if (form.nome_cognome.trim().length < 2) e.nome_cognome = 'Inserisci nome e cognome';
-    if (form.username.trim().length < 3)     e.username = 'Almeno 3 caratteri';
-    if (!/^[a-zA-Z0-9_]+$/.test(form.username)) e.username = 'Solo lettere, numeri e underscore';
-    if (!form.email.includes('@'))           e.email = 'Email non valida';
-    if (form.password.length < 6)           e.password = 'Almeno 6 caratteri';
-    if (form.password !== form.conferma)    e.conferma = 'Le password non coincidono';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Email non valida';
+    if (form.password.length < 6)  e.password = 'Almeno 6 caratteri';
+    if (form.password !== form.conferma) e.conferma = 'Le password non coincidono';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -29,12 +26,13 @@ export default function Register({ onLogin }) {
     if (!validate()) return;
     setLoading(true);
     try {
+      const email = form.email.trim().toLowerCase();
       const res = await fetch(`${BASE_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: form.username.toLowerCase().trim(),
-          email: form.email.trim(),
+          username: email,           // email usata come username
+          email: email,
           nome_cognome: form.nome_cognome.trim(),
           password: form.password,
         }),
@@ -42,7 +40,6 @@ export default function Register({ onLogin }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Errore registrazione');
 
-      // Salva token e accedi direttamente
       localStorage.setItem('sce_token', data.access_token);
       localStorage.setItem('sce_user', JSON.stringify({ username: data.username, nome_cognome: data.nome_cognome }));
       onLogin(data);
@@ -55,7 +52,7 @@ export default function Register({ onLogin }) {
   };
 
   const field = (key, label, type = 'text', placeholder = '') => (
-    <div className="form-group" style={{ marginBottom: 16 }}>
+    <div style={{ marginBottom: 16 }}>
       <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, fontSize: '0.85rem', color: '#1A3A5C' }}>
         {label}
       </label>
@@ -66,7 +63,8 @@ export default function Register({ onLogin }) {
         onKeyDown={e => e.key === 'Enter' && handleSubmit()}
         placeholder={placeholder}
         style={{
-          width: '100%', padding: '10px 12px', borderRadius: 8, border: errors[key] ? '1.5px solid #e74c3c' : '1.5px solid #dce3ed',
+          width: '100%', padding: '10px 12px', borderRadius: 8,
+          border: errors[key] ? '1.5px solid #e74c3c' : '1.5px solid #dce3ed',
           fontSize: '0.95rem', boxSizing: 'border-box', outline: 'none',
         }}
       />
@@ -75,10 +73,9 @@ export default function Register({ onLogin }) {
   );
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f4f9' }}>
-      <div style={{ background: '#fff', borderRadius: 16, padding: '40px 36px', width: '100%', maxWidth: 420, boxShadow: '0 4px 24px rgba(26,58,92,0.10)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0F1E2D 0%, #1A2E42 100%)' }}>
+      <div style={{ background: '#fff', borderRadius: 16, padding: '40px 36px', width: '100%', maxWidth: 420, boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}>
 
-        {/* Logo / Titolo */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <div style={{ fontSize: 36, marginBottom: 8 }}>🏗️</div>
           <h1 style={{ color: '#1A3A5C', fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>SafetyDocs</h1>
@@ -86,8 +83,7 @@ export default function Register({ onLogin }) {
         </div>
 
         {field('nome_cognome', 'Nome e Cognome', 'text', 'Mario Rossi')}
-        {field('username', 'Username', 'text', 'mario_rossi')}
-        {field('email', 'Email', 'email', 'mario@studio.it')}
+        {field('email', 'Email (usata per accedere)', 'email', 'mario@studio.it')}
         {field('password', 'Password', 'password', 'Almeno 6 caratteri')}
         {field('conferma', 'Conferma Password', 'password', 'Ripeti la password')}
 
@@ -106,7 +102,7 @@ export default function Register({ onLogin }) {
 
         <p style={{ textAlign: 'center', marginTop: 20, fontSize: '0.88rem', color: '#5A6B7D' }}>
           Hai già un account?{' '}
-          <Link to="/login" style={{ color: '#1A3A5C', fontWeight: 700, textDecoration: 'none' }}>
+          <Link to="/" style={{ color: '#1A3A5C', fontWeight: 700, textDecoration: 'none' }}>
             Accedi
           </Link>
         </p>
