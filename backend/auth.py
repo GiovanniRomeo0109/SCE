@@ -16,10 +16,12 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 # ── Password ───────────────────────────────────────────────────────────────────
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    # bcrypt ha un limite di 72 byte
+    return pwd_context.verify(plain[:72], hashed)
 
 def hash_password(plain: str) -> str:
-    return pwd_context.hash(plain)
+    # bcrypt ha un limite di 72 byte
+    return pwd_context.hash(plain[:72])
 
 # ── Token ──────────────────────────────────────────────────────────────────────
 def create_access_token(data: dict) -> str:
