@@ -139,3 +139,4 @@ def log_usage(username: str, endpoint: str, credits: int = 1):
     """, (username, endpoint, credits))
     conn.commit()
     conn.close()
+get_db = get_conn  # alias per compatibilità con i router esistenti
