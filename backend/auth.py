@@ -1,73 +1,65 @@
-"""
-Autenticazione JWT per demo SCE
-Utenti definiti tramite variabile d'ambiente DEMO_USERS (JSON)
-"""
-import os, json, hashlib, hmac, base64, time
-from typing import Optional
+import os
+from datetime import datetime, timedelta
+from jose import JWTError, jwt
+from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import OAuth2PasswordBearer
 
-SECRET_KEY = os.environ.get("JWT_SECRET", "cambia-questa-chiave-in-produzione")
-TOKEN_EXPIRE_HOURS = 12
-bearer_scheme = HTTPBearer()
+from database import get_user_by_username
 
-# ── Carica utenti da env ───────────────────────────────────────────────────────
-def get_users() -> dict:
-    raw = os.environ.get("DEMO_USERS", "[]")
+SECRET_KEY = os.environ.get("JWT_SECRET", "dev-secret-change-in-production")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 8  # 8 ore
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+
+# ── Password ───────────────────────────────────────────────────────────────────
+def verify_password(plain: str, hashed: str) -> bool:
+    return pwd_context.verify(plain, hashed)
+
+def hash_password(plain: str) -> str:
+    return pwd_context.hash(plain)
+
+# ── Token ──────────────────────────────────────────────────────────────────────
+def create_access_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode["exp"] = expire
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def decode_token(token: str) -> dict:
     try:
-        lista = json.loads(raw)
-        return {u["username"]: u for u in lista}
-    except Exception:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
         return {}
 
-# ── JWT minimale (senza dipendenze extra) ─────────────────────────────────────
-def _b64(data: bytes) -> str:
-    return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
-
-def _b64d(s: str) -> bytes:
-    pad = 4 - len(s) % 4
-    return base64.urlsafe_b64decode(s + "=" * pad)
-
-def create_token(username: str) -> str:
-    header = _b64(json.dumps({"alg": "HS256", "typ": "JWT"}).encode())
-    payload = _b64(json.dumps({
-        "sub": username,
-        "exp": int(time.time()) + TOKEN_EXPIRE_HOURS * 3600,
-        "iat": int(time.time()),
-    }).encode())
-    msg = f"{header}.{payload}".encode()
-    sig = _b64(hmac.new(SECRET_KEY.encode(), msg, hashlib.sha256).digest())
-    return f"{header}.{payload}.{sig}"
-
-def verify_token(token: str) -> Optional[str]:
-    try:
-        parts = token.split(".")
-        if len(parts) != 3:
-            return None
-        header, payload, sig = parts
-        msg = f"{header}.{payload}".encode()
-        expected = _b64(hmac.new(SECRET_KEY.encode(), msg, hashlib.sha256).digest())
-        if not hmac.compare_digest(sig, expected):
-            return None
-        data = json.loads(_b64d(payload))
-        if data.get("exp", 0) < time.time():
-            return None
-        return data.get("sub")
-    except Exception:
-        return None
-
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
-
-# ── Dependency FastAPI ─────────────────────────────────────────────────────────
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)) -> dict:
-    username = verify_token(credentials.credentials)
-    if not username:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Token non valido o scaduto")
-    users = get_users()
-    user = users.get(username)
+# ── Autenticazione utente ──────────────────────────────────────────────────────
+def authenticate_user(username: str, password: str):
+    """Verifica username e password contro il DB. Ritorna il record utente o None."""
+    user = get_user_by_username(username)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Utente non trovato")
+        return None
+    if not verify_password(password, user["password_hash"]):
+        return None
+    if not user.get("is_active", 1):
+        return None
+    return user
+
+# ── Dependency: utente corrente ────────────────────────────────────────────────
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    payload = decode_token(token)
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token non valido",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user = get_user_by_username(username)
+    if not user or not user.get("is_active", 1):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Utente non trovato o disabilitato",
+        )
     return user
