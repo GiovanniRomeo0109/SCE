@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -13,8 +14,8 @@ export default function Login({ onLogin }) {
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`,
       });
       const data = await res.json();
       if (!res.ok) { setError(data.detail || 'Credenziali non valide'); return; }
@@ -115,8 +116,11 @@ export default function Login({ onLogin }) {
           </button>
         </div>
 
-        <p style={{ textAlign: 'center', color: '#5A6B7D', fontSize: '0.75rem', marginTop: 24 }}>
-          Demo SCE · D.Lgs. 81/2008
+        <p style={{ textAlign: 'center', color: '#8A9BB0', fontSize: '0.85rem', marginTop: 24 }}>
+          Non hai un account?{' '}
+          <Link to="/register" style={{ color: '#F5C842', fontWeight: 700, textDecoration: 'none' }}>
+            Registrati
+          </Link>
         </p>
       </div>
     </div>
