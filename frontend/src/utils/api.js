@@ -95,3 +95,35 @@ export async function register(body) {
   if (!res.ok) throw new Error(json.detail || 'Errore registrazione');
   return json;
 }
+
+// ── Anagrafica CRUD completo ──────────────────────────────────────────────────
+export const createCommittente  = (data)     => apiFetch('/api/anagrafica/committenti',          { method: 'POST',   body: JSON.stringify(data) });
+export const createImpresa      = (data)     => apiFetch('/api/anagrafica/imprese',              { method: 'POST',   body: JSON.stringify(data) });
+export const createCoordinatore = (data)     => apiFetch('/api/anagrafica/coordinatori',         { method: 'POST',   body: JSON.stringify(data) });
+export const updateCommittente  = (id, data) => apiFetch(`/api/anagrafica/committenti/${id}`,   { method: 'PUT',    body: JSON.stringify(data) });
+export const updateImpresa      = (id, data) => apiFetch(`/api/anagrafica/imprese/${id}`,       { method: 'PUT',    body: JSON.stringify(data) });
+export const updateCoordinatore = (id, data) => apiFetch(`/api/anagrafica/coordinatori/${id}`,  { method: 'PUT',    body: JSON.stringify(data) });
+export const deleteCommittente  = (id)       => apiFetch(`/api/anagrafica/committenti/${id}`,   { method: 'DELETE' });
+export const deleteImpresa      = (id)       => apiFetch(`/api/anagrafica/imprese/${id}`,       { method: 'DELETE' });
+export const deleteCoordinatore = (id)       => apiFetch(`/api/anagrafica/coordinatori/${id}`,  { method: 'DELETE' });
+
+// ── Agent completo ────────────────────────────────────────────────────────────
+export const generaDocumento    = (data) => apiFetch('/api/agent/genera-documento',  { method: 'POST', body: JSON.stringify(data) });
+export const generaContenutoAI  = (data) => apiFetch('/api/agent/genera-contenuto',  { method: 'POST', body: JSON.stringify(data) });
+export const estraiDati         = (formData) => apiFetch('/api/estrazione/estrai',   { method: 'POST', body: formData });
+
+// ── Default export ────────────────────────────────────────────────────────────
+const api = {
+  apiFetch, logout, getCurrentUser, getUsageStats, register,
+  getStorico, deleteDocumento,
+  getCommittenti, getImprese, getCoordinatori,
+  saveCommittente, saveImpresa, saveCoordinatore,
+  createCommittente, createImpresa, createCoordinatore,
+  updateCommittente, updateImpresa, updateCoordinatore,
+  deleteCommittente, deleteImpresa, deleteCoordinatore,
+  checkObbligatorieta, generaContenuto, analisiRischi,
+  generaDocumento, generaContenutoAI,
+  estraiDocumento, estraiDati,
+  verificaPsc, verificaPos, verificaCongruita, generaVerbale,
+};
+export default api;
