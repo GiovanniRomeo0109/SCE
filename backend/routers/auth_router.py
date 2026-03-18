@@ -69,9 +69,12 @@ async def register(body: RegisterRequest):
         )
 
     hashed = hash_password(body.password)
-    ok = create_user(email, email, body.nome_cognome, hashed)
+    try:
+        ok = create_user(email, email, body.nome_cognome, hashed)
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail=f"Errore DB: {ex}")
     if not ok:
-        raise HTTPException(status_code=500, detail="Errore durante la registrazione")
+        raise HTTPException(status_code=409, detail='Email già registrata')
 
     token = create_access_token({"sub": email})
     return {

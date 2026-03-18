@@ -37,8 +37,11 @@ export default function Register({ onLogin }) {
           password: form.password,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Errore registrazione');
+      // Gestisce sia risposte JSON che testo (es. errori 500)
+      const text = await res.text();
+      let data = {};
+      try { data = JSON.parse(text); } catch {}
+      if (!res.ok) throw new Error(data.detail || `Errore server (${res.status})`);
 
       localStorage.setItem('sce_token', data.access_token);
       localStorage.setItem('sce_user', JSON.stringify({ username: data.username, nome_cognome: data.nome_cognome }));
