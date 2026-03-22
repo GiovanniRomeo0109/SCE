@@ -18,7 +18,15 @@ export default function Storico() {
   const notify = useNotify();
 
   const carica = () => {
-    getStorico().then(r => setDocs(r.data)).catch(() => {});
+    getStorico()
+      .then(r => {
+        const list = Array.isArray(r) ? r
+          : Array.isArray(r?.data) ? r.data
+          : Array.isArray(r?.documenti) ? r.documenti
+          : [];
+        setDocs(list);
+      })
+      .catch(() => {});
   };
 
   useEffect(carica, []);
@@ -37,7 +45,7 @@ export default function Storico() {
   const filtered = docs.filter(d =>
     (d.nome_cantiere || '').toLowerCase().includes(filtro.toLowerCase()) ||
     (d.impresa_nome || '').toLowerCase().includes(filtro.toLowerCase()) ||
-    (d.tipo_documento || '').toLowerCase().includes(filtro.toLowerCase())
+    (d.tipo || '').toLowerCase().includes(filtro.toLowerCase())
   );
 
   return (
@@ -75,13 +83,13 @@ export default function Storico() {
               </thead>
               <tbody>
                 {filtered.map(d => {
-                  const cfg = TIPO_CONFIG[d.tipo_documento] || {
-                    label: d.tipo_documento,
+                  const cfg = TIPO_CONFIG[d.tipo] || {
+                    label: d.tipo,
                     badge: 'badge-notifica',
                     icon: '📄',
                   };
-                  const isVerifica = d.tipo_documento && d.tipo_documento.startsWith('verifica_');
-                  const isVerbale = d.tipo_documento === 'verbale_incongruenze';
+                  const isVerifica = d.tipo && d.tipo.startsWith('verifica_');
+                  const isVerbale = d.tipo === 'verbale_incongruenze';
                   return (
                     <tr key={d.id}>
                       <td>
@@ -108,7 +116,7 @@ export default function Storico() {
                       <td style={{ display: 'flex', gap: 8 }}>
                         {!isVerifica && !isVerbale && (
                           <a
-                            href={`http://localhost:8000/api/documents/download/${d.id}`}
+                            href={`/api/documents/download/${d.id}`}
                             className="btn btn-gold"
                             download
                           >
