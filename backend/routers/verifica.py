@@ -167,10 +167,10 @@ def clean_json(raw: str) -> dict:
 def salva_db(db, tipo, nome, risultato) -> int:
     try:
         cur = db.execute(
-            "INSERT INTO documenti_generati (tipo_documento, nome_cantiere, "
-            "data_generazione, file_path, stato) VALUES (?,?,?,?,?)",
-            (f"verifica_{tipo}", nome, datetime.now().isoformat(),
-             json.dumps(risultato, ensure_ascii=False), "In verifica"))
+            "INSERT INTO documenti (tipo, nome_cantiere, contenuto, stato) VALUES (?,?,?,?)",
+            (f"verifica_{tipo}", nome,
+             json.dumps(risultato, ensure_ascii=False),
+             "completato"))
         db.commit()
         return cur.lastrowid
     except Exception as e:
@@ -780,9 +780,8 @@ async def genera_verbale(
     )
     db = get_db()
     cur = db.execute(
-        "INSERT INTO documenti_generati (tipo_documento, nome_cantiere, "
-        "data_generazione, file_path, stato) VALUES (?,?,?,?,?)",
+        "INSERT INTO documenti (tipo, nome_cantiere, contenuto, stato) VALUES (?,?,?,?)",
         ("verbale_incongruenze", payload.get("nome_cantiere", "Cantiere"),
-         datetime.now().isoformat(), path, "Generato"))
+         path, "completato"))
     db.commit()
     return {"doc_id": cur.lastrowid, "path": path}
