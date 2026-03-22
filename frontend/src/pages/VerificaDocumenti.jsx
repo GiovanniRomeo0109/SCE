@@ -363,9 +363,115 @@ export default function VerificaDocumenti() {
     } finally { setLoading(false); setLoadingMsg(''); }
   };
 
-  // ── Genera report PDF verifica ────────────────────────────────────────────
-  const generaReportPdf = async (docId) => {
-    window.open(`/api/documents/download/${docId}`, '_blank');
+  // ── Genera report PDF verifica (client-side via stampa HTML) ────────────────
+  const generaReportPdf = (risultato, tipoLabel = 'PSC') => {
+    if (!risultato) return;
+
+    const nc = risultato.non_conformita || [];
+    const conformi = risultato.punti_conformi || [];
+    const rie = risultato.riepilogo || {};
+    const coloreGiudizio = {
+      'CONFORME': '#27AE60',
+      'CONFORME CON RISERVE': '#F39C12',
+      'NON CONFORME': '#E74C3C',
+    }[risultato.giudizio_sintetico] || '#5A6B7D';
+
+    const coloreSev = { 'CRITICO': '#E74C3C', 'IMPORTANTE': '#F39C12', 'CONSIGLIO': '#3498DB' };
+
+    const html = `<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Report Verifica ${tipoLabel} — ${risultato.nome_file || ''}</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 11px; color: #1A2E42; margin: 20px; }
+    h1 { font-size: 18px; color: #1A3A5C; margin-bottom: 4px; }
+    h2 { font-size: 13px; color: #1A3A5C; margin: 16px 0 6px; border-bottom: 1px solid #dce3ed; padding-bottom: 4px; }
+    .header { background: #1A3A5C; color: white; padding: 16px 20px; border-radius: 6px; margin-bottom: 16px; }
+    .header h1 { color: #F5C842; margin: 0 0 4px; }
+    .header p { margin: 0; color: #8A9BB0; font-size: 10px; }
+    .giudizio { display: inline-block; padding: 6px 16px; border-radius: 20px; color: white;
+                background: ${coloreGiudizio}; font-weight: bold; font-size: 13px; margin: 8px 0; }
+    .score { font-size: 28px; font-weight: bold; color: ${coloreGiudizio}; }
+    .riepilogo { display: flex; gap: 12px; margin: 10px 0; flex-wrap: wrap; }
+    .stat { background: #f5f7fa; border-radius: 6px; padding: 8px 14px; text-align: center; }
+    .stat .n { font-size: 20px; font-weight: bold; }
+    .stat .l { font-size: 9px; color: #8A9BB0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 10px; }
+    th { background: #1A3A5C; color: white; padding: 6px 8px; text-align: left; }
+    td { padding: 5px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+    tr:nth-child(even) td { background: #f9fafc; }
+    .sev { display: inline-block; padding: 2px 6px; border-radius: 3px; color: white; font-size: 9px; font-weight: bold; }
+    .CRITICO { background: #E74C3C; }
+    .IMPORTANTE { background: #F39C12; }
+    .CONSIGLIO { background: #3498DB; }
+    .ok { color: #27AE60; font-weight: bold; }
+    @media print { body { margin: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🔍 Report Verifica ${tipoLabel}</h1>
+    <p>File: ${risultato.nome_file || '—'} &nbsp;|&nbsp; Data: ${risultato.data_verifica || new Date().toLocaleDateString('it-IT')} &nbsp;|&nbsp; SafetyDocs — D.Lgs. 81/2008</p>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:24px;margin-bottom:12px">
+    <div>
+      <div class="score">${risultato.punteggio_conformita ?? '—'}%</div>
+      <div style="font-size:10px;color:#8A9BB0">Punteggio conformità</div>
+    </div>
+    <div>
+      <div class="giudizio">${risultato.giudizio_sintetico || '—'}</div>
+    </div>
+  </div>
+
+  <div class="riepilogo">
+    <div class="stat"><div class="n" style="color:#E74C3C">${rie.critici ?? 0}</div><div class="l">CRITICI</div></div>
+    <div class="stat"><div class="n" style="color:#F39C12">${rie.importanti ?? 0}</div><div class="l">IMPORTANTI</div></div>
+    <div class="stat"><div class="n" style="color:#3498DB">${rie.consigli ?? 0}</div><div class="l">CONSIGLI</div></div>
+    <div class="stat"><div class="n" style="color:#27AE60">${rie.conformi ?? conformi.length}</div><div class="l">CONFORMI</div></div>
+    <div class="stat"><div class="n">${rie.totale_verifiche ?? (nc.length + conformi.length)}</div><div class="l">TOTALE VERIFICHE</div></div>
+  </div>
+
+  ${nc.length > 0 ? `
+  <h2>⚠️ Non Conformità (${nc.length})</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Severità</th><th>Sezione</th><th>Descrizione</th><th>Norma</th><th>Trovato</th></tr></thead>
+    <tbody>
+      ${nc.map(x => `
+      <tr>
+        <td><b>${x.id || ''}</b></td>
+        <td><span class="sev ${x.severita}">${x.severita || ''}</span></td>
+        <td>${x.sezione || ''}</td>
+        <td>${x.descrizione || ''}</td>
+        <td style="font-size:9px">${x.norma_violata || ''}</td>
+        <td style="font-size:9px;color:#E74C3C">${x.testo_trovato || ''}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>` : ''}
+
+  ${conformi.length > 0 ? `
+  <h2>✅ Punti Conformi (${conformi.length})</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Sezione</th><th>Descrizione</th></tr></thead>
+    <tbody>
+      ${conformi.map(x => `
+      <tr>
+        <td><b>${x.id || ''}</b></td>
+        <td>${x.sezione || ''}</td>
+        <td>${x.descrizione || ''}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>` : ''}
+
+  ${risultato.note_aggiuntive ? `<h2>Note</h2><p>${risultato.note_aggiuntive}</p>` : ''}
+</body>
+</html>`;
+
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+    setTimeout(() => w.print(), 500);
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -466,7 +572,7 @@ export default function VerificaDocumenti() {
                   <h3 style={{ color: '#1A3A5C', margin: 0 }}>Non conformità rilevate</h3>
                   {risultatoPsc.doc_id && (
                     <button className="btn btn-primary" style={{ fontSize: '0.82rem' }}
-                      onClick={() => generaReportPdf(risultatoPsc.doc_id)}>
+                      onClick={() => generaReportPdf(risultatoPsc, 'PSC')}>
                       ↓ Scarica Report PDF
                     </button>
                   )}
@@ -544,7 +650,7 @@ export default function VerificaDocumenti() {
                   ))}
                   {ris.doc_id && (
                     <button className="btn btn-primary" style={{ marginTop: 10, fontSize: '0.82rem' }}
-                      onClick={() => generaReportPdf(ris.doc_id)}>
+                      onClick={() => generaReportPdf(ris, 'POS')}>
                       ↓ Scarica Report PDF
                     </button>
                   )}

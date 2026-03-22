@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 import os, pathlib
 
 from database import init_db
-from routers import agent, anagrafica, estrazione, verifica
+from routers import agent, anagrafica, estrazione, verifica, documents
 from routers.auth_router import router as auth_router
 
 app = FastAPI(title="SCE — Sicurezza Cantieri Edili")
@@ -43,6 +43,7 @@ app.include_router(agent.router, prefix="/api/agent",     tags=["Agent"])
 app.include_router(anagrafica.router, prefix="/api/anagrafica", tags=["Anagrafica"])
 app.include_router(estrazione.router, prefix="/api/estrazione", tags=["Estrazione"])
 app.include_router(verifica.router,   prefix="/api/verifica",   tags=["Verifica"])
+app.include_router(documents.router,  prefix="/api/documents",  tags=["Documents"])
 
 # ── Serve React build (solo in produzione) ────────────────────────────────────
 STATIC_DIR = pathlib.Path(__file__).parent / "static"
