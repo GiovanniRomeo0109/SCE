@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotify } from '../App';
-import api from '../utils/api';
+import { verificaPsc, verificaPos, verificaCongruita, generaVerbale as apiGeneraVerbale } from '../utils/api';
 
 // ── Costanti ─────────────────────────────────────────────────────────────────
 const SEV = {
@@ -295,12 +295,11 @@ export default function VerificaDocumenti() {
       const fd = new FormData();
       fd.append('file', filePsc[0]);
       fd.append('nome_cantiere', nomeCantiere || filePsc[0].name);
-      const res = await api.post('/verifica/verifica-psc', fd,
-        { headers: { 'Content-Type': 'multipart/form-data' } });
+      const res = await verificaPsc(fd);
       setRisultatoPsc(res.data);
       notify('Verifica PSC completata ✓', 'success');
     } catch (e) {
-      notify('Errore: ' + (e.response?.data?.detail || e.message), 'error');
+      notify('Errore: ' + e.message, 'error');
     } finally { setLoading(false); setLoadingMsg(''); }
   };
 
@@ -313,12 +312,11 @@ export default function VerificaDocumenti() {
       const fd = new FormData();
       filePos.forEach(f => fd.append('files', f));
       fd.append('nome_cantiere', nomeCantiere || 'Cantiere');
-      const res = await api.post('/verifica/verifica-pos', fd,
-        { headers: { 'Content-Type': 'multipart/form-data' } });
+      const res = await verificaPos(fd);
       setRisultatiPos(res.data.risultati || []);
       notify(`Verifica di ${res.data.totale_pos} POS completata ✓`, 'success');
     } catch (e) {
-      notify('Errore: ' + (e.response?.data?.detail || e.message), 'error');
+      notify('Errore: ' + e.message, 'error');
     } finally { setLoading(false); setLoadingMsg(''); }
   };
 
@@ -333,8 +331,7 @@ export default function VerificaDocumenti() {
       fd.append('psc', filePscCongruita[0]);
       filePosCongruita.forEach(f => fd.append('pos_files', f));
       fd.append('nome_cantiere', nomeCantiere || 'Cantiere');
-      const res = await api.post('/verifica/verifica-congruita', fd,
-        { headers: { 'Content-Type': 'multipart/form-data' } });
+      const res = await verificaCongruita(fd);
       setRisultatiCongruita(res.data.risultati || []);
       // Inizializza le incongruenze modificabili
       const newIncMap = {};
@@ -344,7 +341,7 @@ export default function VerificaDocumenti() {
       setIncMap(newIncMap);
       notify('Verifica congruità completata ✓', 'success');
     } catch (e) {
-      notify('Errore: ' + (e.response?.data?.detail || e.message), 'error');
+      notify('Errore: ' + e.message, 'error');
     } finally { setLoading(false); setLoadingMsg(''); }
   };
 
@@ -353,16 +350,13 @@ export default function VerificaDocumenti() {
     setLoading(true);
     setLoadingMsg('Generazione verbale PDF...');
     try {
-      const res = await api.post('/verifica/genera-verbale', {
+      const res = await apiGeneraVerbale({
         incongruenze,
         pos_filename: posFilename,
         psc_filename: pscFilename,
         nome_cantiere: nomeCantiere || 'Cantiere',
       });
-      window.open(
-        `http://localhost:8000/api/documents/download/${res.data.doc_id}`,
-        '_blank'
-      );
+      window.open(`/api/documents/download/${res.data.doc_id}`, '_blank');
       notify('Verbale generato ✓', 'success');
     } catch (e) {
       notify('Errore generazione verbale: ' + e.message, 'error');
@@ -371,7 +365,7 @@ export default function VerificaDocumenti() {
 
   // ── Genera report PDF verifica ────────────────────────────────────────────
   const generaReportPdf = async (docId) => {
-    window.open(`http://localhost:8000/api/documents/download/${docId}`, '_blank');
+    window.open(`/api/documents/download/${docId}`, '_blank');
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
