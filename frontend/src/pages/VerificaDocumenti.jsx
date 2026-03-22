@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotify } from '../App';
-import { verificaPsc, verificaPos, verificaCongruita, generaVerbale as apiGeneraVerbale } from '../utils/api';
+import { verificaPsc, verificaPos, verificaCongruita } from '../utils/api';
 
 // ── Costanti ─────────────────────────────────────────────────────────────────
 const SEV = {
@@ -345,22 +345,108 @@ export default function VerificaDocumenti() {
     } finally { setLoading(false); setLoadingMsg(''); }
   };
 
-  // ── Genera verbale ────────────────────────────────────────────────────────
-  const generaVerbale = async (posFilename, pscFilename, incongruenze) => {
-    setLoading(true);
-    setLoadingMsg('Generazione verbale PDF...');
-    try {
-      const res = await apiGeneraVerbale({
-        incongruenze,
-        pos_filename: posFilename,
-        psc_filename: pscFilename,
-        nome_cantiere: nomeCantiere || 'Cantiere',
-      });
-      window.open(`/api/documents/download/${res.data.doc_id}`, '_blank');
-      notify('Verbale generato ✓', 'success');
-    } catch (e) {
-      notify('Errore generazione verbale: ' + e.message, 'error');
-    } finally { setLoading(false); setLoadingMsg(''); }
+  // ── Genera verbale PDF (client-side) ─────────────────────────────────────
+  const generaVerbale = (posFilename, pscFilename, incongruenze) => {
+    if (!incongruenze || incongruenze.length === 0) {
+      notify('Nessuna incongruenza da inserire nel verbale', 'warning');
+      return;
+    }
+    const now = new Date().toLocaleDateString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric' });
+    const cantiere = nomeCantiere || 'Cantiere';
+    const coloreSev = { 'CRITICO': '#E74C3C', 'IMPORTANTE': '#F39C12', 'CONSIGLIO': '#3498DB' };
+
+    const html = `<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Verbale Incongruenze PSC-POS</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 11px; color: #1A2E42; margin: 20px; }
+    h1 { font-size: 18px; color: #1A3A5C; }
+    h2 { font-size: 13px; color: #1A3A5C; margin: 16px 0 6px; border-bottom: 1px solid #dce3ed; padding-bottom: 4px; }
+    .header { background: #1A3A5C; color: white; padding: 16px 20px; border-radius: 6px; margin-bottom: 16px; }
+    .header h1 { color: #F5C842; margin: 0 0 4px; }
+    .header p { margin: 2px 0; color: #8A9BB0; font-size: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 10px; }
+    th { background: #1A3A5C; color: white; padding: 6px 8px; text-align: left; }
+    td { padding: 5px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+    tr:nth-child(even) td { background: #f9fafc; }
+    .sev { display: inline-block; padding: 2px 7px; border-radius: 3px; color: white; font-size: 9px; font-weight: bold; }
+    .validata { color: #27AE60; font-weight: bold; }
+    .firma { margin-top: 40px; display: flex; gap: 60px; }
+    .firma-box { border-top: 1px solid #1A3A5C; padding-top: 6px; min-width: 200px; font-size: 10px; color: #5A6B7D; }
+    @media print { body { margin: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📋 Verbale Incongruenze PSC — POS</h1>
+    <p>Cantiere: ${cantiere}</p>
+    <p>PSC: ${pscFilename || '—'} &nbsp;|&nbsp; POS: ${posFilename || '—'}</p>
+    <p>Data: ${now} &nbsp;|&nbsp; SafetyDocs — D.Lgs. 81/2008 All. XV</p>
+  </div>
+
+  <p>Il Coordinatore per la Sicurezza in fase di Esecuzione (CSE), a seguito della verifica di congruità
+  tra il Piano di Sicurezza e Coordinamento (PSC) e il Piano Operativo di Sicurezza (POS) dell'impresa,
+  ha rilevato le seguenti incongruenze che richiedono azioni correttive prima dell'approvazione del POS:</p>
+
+  <h2>Incongruenze rilevate (${incongruenze.length})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:5%">ID</th>
+        <th style="width:8%">Severità</th>
+        <th style="width:12%">Elemento</th>
+        <th style="width:20%">Valore PSC</th>
+        <th style="width:20%">Valore POS</th>
+        <th style="width:20%">Modifica richiesta</th>
+        <th style="width:8%">Sezione POS</th>
+        <th style="width:7%">Stato</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${incongruenze.map(inc => `
+      <tr>
+        <td><b>${inc.id || ''}</b></td>
+        <td><span class="sev" style="background:${coloreSev[inc.severita] || '#8A9BB0'}">${inc.severita || ''}</span></td>
+        <td>${inc.elemento || ''}</td>
+        <td>${inc.valore_psc || '—'}</td>
+        <td style="color:#E74C3C">${inc.valore_pos || '—'}</td>
+        <td>${inc.modifica_richiesta || ''}</td>
+        <td style="font-size:9px">${inc.sezione_pos_da_modificare || ''}</td>
+        <td class="${inc.validata ? 'validata' : ''}">${inc.validata ? '✅ Validata' : '⏳ Da correggere'}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+
+  <p style="margin-top:16px;font-size:10px;color:#5A6B7D">
+    Il presente verbale è stato redatto ai sensi dell'art. 92 del D.Lgs. 81/2008.
+    L'impresa esecutrice è tenuta ad adeguare il POS alle prescrizioni sopra indicate
+    prima dell'inizio delle lavorazioni.
+  </p>
+
+  <div class="firma">
+    <div class="firma-box">
+      Coordinatore per la Sicurezza (CSE)<br><br><br>
+      Firma ____________________________
+    </div>
+    <div class="firma-box">
+      Responsabile Impresa Esecutrice<br><br><br>
+      Firma ____________________________
+    </div>
+    <div class="firma-box">
+      Data e luogo<br><br><br>
+      ____________________________
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+    setTimeout(() => w.print(), 500);
+    notify('Verbale pronto — usa Stampa → Salva come PDF', 'success');
   };
 
   // ── Genera report PDF verifica (client-side via stampa HTML) ────────────────
