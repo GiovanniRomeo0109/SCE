@@ -10,18 +10,35 @@ def get_conn():
 
 
 def _migrate_usage_log_schema(cursor):
-    """Aggiunge colonne mancanti in usage_log se il DB è stato creato con lo schema vecchio."""
+    """Ricrea usage_log con schema corretto se ha il vecchio schema (colonna giorno)."""
     try:
         cols = [row[1] for row in cursor.execute("PRAGMA table_info(usage_log)").fetchall()]
-        if "endpoint" not in cols:
+        if "giorno" in cols:
+            # Schema vecchio — rinomina e ricrea
+            cursor.execute("ALTER TABLE usage_log RENAME TO usage_log_old")
+            cursor.execute("""
+                CREATE TABLE usage_log (
+                    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username     TEXT NOT NULL,
+                    endpoint     TEXT NOT NULL DEFAULT '',
+                    credits_used INTEGER DEFAULT 1,
+                    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            # Migra i dati vecchi preservando username e data
+            cursor.execute("""
+                INSERT INTO usage_log (username, endpoint, credits_used, created_at)
+                SELECT username,
+                       COALESCE(tipo_operazione, 'legacy'),
+                       1,
+                       giorno || ' 00:00:00'
+                FROM usage_log_old
+            """)
+            cursor.execute("DROP TABLE usage_log_old")
+            print("✅ Migrazione: usage_log ricreato con schema corretto")
+        elif "endpoint" not in cols:
             cursor.execute("ALTER TABLE usage_log ADD COLUMN endpoint TEXT NOT NULL DEFAULT ''" )
             print("✅ Migrazione: aggiunta colonna endpoint a usage_log")
-        if "credits_used" not in cols:
-            cursor.execute("ALTER TABLE usage_log ADD COLUMN credits_used INTEGER DEFAULT 1")
-            print("✅ Migrazione: aggiunta colonna credits_used a usage_log")
-        if "created_at" not in cols:
-            cursor.execute("ALTER TABLE usage_log ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-            print("✅ Migrazione: aggiunta colonna created_at a usage_log")
     except Exception as e:
         print(f"⚠️ Migrazione usage_log: {e}")
 
