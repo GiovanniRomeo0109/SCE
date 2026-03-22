@@ -14,11 +14,19 @@ export default function Login({ onLogin }) {
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ username, password }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.detail || 'Credenziali non valide'); return; }
+      if (!res.ok) {
+        const detail = data.detail;
+        if (Array.isArray(detail)) {
+          setError(detail.map(e => e.msg).join(', '));
+        } else {
+          setError(detail || 'Credenziali non valide');
+        }
+        return;
+      }
       localStorage.setItem('sce_token', data.access_token);
       localStorage.setItem('sce_user', JSON.stringify({
         username: data.username,
