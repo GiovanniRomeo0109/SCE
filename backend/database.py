@@ -8,6 +8,23 @@ def get_conn():
     conn.row_factory = sqlite3.Row
     return conn
 
+
+def _migrate_usage_log_schema(cursor):
+    """Aggiunge colonne mancanti in usage_log se il DB è stato creato con lo schema vecchio."""
+    try:
+        cols = [row[1] for row in cursor.execute("PRAGMA table_info(usage_log)").fetchall()]
+        if "endpoint" not in cols:
+            cursor.execute("ALTER TABLE usage_log ADD COLUMN endpoint TEXT NOT NULL DEFAULT ''" )
+            print("✅ Migrazione: aggiunta colonna endpoint a usage_log")
+        if "credits_used" not in cols:
+            cursor.execute("ALTER TABLE usage_log ADD COLUMN credits_used INTEGER DEFAULT 1")
+            print("✅ Migrazione: aggiunta colonna credits_used a usage_log")
+        if "created_at" not in cols:
+            cursor.execute("ALTER TABLE usage_log ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            print("✅ Migrazione: aggiunta colonna created_at a usage_log")
+    except Exception as e:
+        print(f"⚠️ Migrazione usage_log: {e}")
+
 def init_db():
     conn = get_conn()
     c = conn.cursor()
@@ -61,6 +78,10 @@ def init_db():
         )
     """)
 
+    conn.commit()
+
+    # Migrazione schema: aggiunge colonne mancanti in usage_log se DB creato con schema vecchio
+    _migrate_usage_log_schema(c)
     conn.commit()
 
     # Migrazione: importa DEMO_USERS nell'env nella tabella users (solo se tabella vuota)
@@ -139,4 +160,6 @@ def log_usage(username: str, endpoint: str, credits: int = 1):
     """, (username, endpoint, credits))
     conn.commit()
     conn.close()
-get_db = get_conn  # alias per compatibilità con i router esistenti
+
+# Alias per compatibilità con i router esistenti
+get_db = get_conn
