@@ -507,7 +507,7 @@ def verifica_documento(doc_info: dict, tipo: str, client: anthropic.Anthropic) -
     prompt_est = PROMPT_ESTRAZIONE_PSC if tipo == "psc" else PROMPT_ESTRAZIONE_POS
 
     r1 = client.messages.create(
-        model="claude-sonnet-4-6",
+        model="claude-haiku-4-5-20251001",
         max_tokens=8000,
         system=(
             "Sei un lettore tecnico preciso. Estrai informazioni riportando ESATTAMENTE "
@@ -527,7 +527,7 @@ def verifica_documento(doc_info: dict, tipo: str, client: anthropic.Anthropic) -
     else:
         # Per PDF già inviato come documento, riprova con max_tokens maggiore
         r1b = client.messages.create(
-            model="claude-sonnet-4-6",
+            model="claude-haiku-4-5-20251001",
             max_tokens=8000,
             system="Estrai informazioni riportando ESATTAMENTE il testo. Se assente scrivi ASSENTE. SOLO JSON valido.",
             messages=build_messages(doc_info, prompt_est),
@@ -638,7 +638,7 @@ async def verifica_congruita(
 
     # Estrai PSC
     r_psc = client.messages.create(
-        model="claude-sonnet-4-6", max_tokens=3000,
+        model="claude-haiku-4-5-20251001", max_tokens=3000,
         system="Estrai informazioni da documenti tecnici. Rispondi SOLO con JSON valido.",
         messages=build_messages(psc_info, """
 Estrai dal PSC i seguenti dati in JSON:
@@ -663,7 +663,7 @@ Estrai dal PSC i seguenti dati in JSON:
 
         # Estrai POS
         r_pos = client.messages.create(
-            model="claude-sonnet-4-6", max_tokens=2000,
+            model="claude-haiku-4-5-20251001", max_tokens=2000,
             system="Estrai informazioni da documenti tecnici. Rispondi SOLO con JSON valido.",
             messages=build_messages(pos_info, """
 Estrai dal POS i seguenti dati in JSON:
