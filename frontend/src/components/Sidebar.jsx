@@ -12,6 +12,7 @@ const links = [
   { to: '/committenti',    icon: '👤', label: 'Committenti' },
   { to: '/imprese',        icon: '🏢', label: 'Imprese' },
   { to: '/coordinatori',   icon: '📐', label: 'Coordinatori' },
+  { to: '/elenchi-prezzi', icon: '💶', label: 'Elenchi prezzi' },
 ];
 
 export default function Sidebar({ onLogout }) {

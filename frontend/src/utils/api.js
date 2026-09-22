@@ -136,6 +136,27 @@ export const generaDocumento    = (data) => apiFetch('/api/agent/genera-document
 export const generaContenutoAI  = (data) => apiFetch('/api/agent/genera-contenuto',  { method: 'POST', body: JSON.stringify(data) });
 export const estraiDati         = (formData) => apiFetch('/api/estrazione/estrai',   { method: 'POST', body: formData });
 
+// ── Progetti PSC (blocco 2) ───────────────────────────────────────────────────
+export const getProgetti        = ()               => apiFetch('/api/progetti');
+export const creaProgetto       = (nome)           => apiFetch('/api/progetti', { method: 'POST', body: JSON.stringify({ nome }) });
+export const getProgetto        = (id)             => apiFetch(`/api/progetti/${id}`);
+export const rinominaProgetto   = (id, nome)       => apiFetch(`/api/progetti/${id}`, { method: 'PATCH', body: JSON.stringify({ nome }) });
+export const eliminaProgetto    = (id)             => apiFetch(`/api/progetti/${id}`, { method: 'DELETE' });
+export const caricaDocumentiProgetto = (id, formData) => apiFetch(`/api/progetti/${id}/documenti`, { method: 'POST', body: formData });
+export const correggiTipoDocumento   = (id, docId, tipo) => apiFetch(`/api/progetti/${id}/documenti/${docId}`, { method: 'PATCH', body: JSON.stringify({ tipo }) });
+export const rielaboraDocumento      = (id, docId) => apiFetch(`/api/progetti/${id}/documenti/${docId}/rielabora`, { method: 'POST' });
+export const eliminaDocumentoProgetto = (id, docId) => apiFetch(`/api/progetti/${id}/documenti/${docId}`, { method: 'DELETE' });
+export const getDatiDocumento        = (id, docId) => apiFetch(`/api/progetti/${id}/documenti/${docId}/dati`);
+export const mappaturaDocumento      = (id, docId, m) => apiFetch(`/api/progetti/${id}/documenti/${docId}/mappatura`, { method: 'POST', body: JSON.stringify(m) });
+
+// ── Elenchi prezzi (blocco 2) ─────────────────────────────────────────────────
+export const getElenchi         = ()               => apiFetch('/api/elenchi');
+export const caricaElenco       = (formData)       => apiFetch('/api/elenchi', { method: 'POST', body: formData });
+export const rinominaElenco     = (id, nome)       => apiFetch(`/api/elenchi/${id}`, { method: 'PATCH', body: JSON.stringify({ nome }) });
+export const eliminaElenco      = (id)             => apiFetch(`/api/elenchi/${id}`, { method: 'DELETE' });
+export const mappaturaElenco    = (id, m)          => apiFetch(`/api/elenchi/${id}/mappatura`, { method: 'POST', body: JSON.stringify(m) });
+export const cercaVociElenco    = (id, q)          => apiFetch(`/api/elenchi/${id}/voci?q=${encodeURIComponent(q || '')}`);
+
 // ── Default export ────────────────────────────────────────────────────────────
 const api = {
   apiFetch, logout, getCurrentUser, getUsageStats, getBudget, downloadUrl, register,
@@ -149,5 +170,9 @@ const api = {
   generaDocumento, generaContenutoAI,
   estraiDocumento, estraiDati,
   verificaPsc, verificaPos, verificaCongruita, generaVerbale,
+  getProgetti, creaProgetto, getProgetto, rinominaProgetto, eliminaProgetto,
+  caricaDocumentiProgetto, correggiTipoDocumento, rielaboraDocumento,
+  eliminaDocumentoProgetto, getDatiDocumento, mappaturaDocumento,
+  getElenchi, caricaElenco, rinominaElenco, eliminaElenco, mappaturaElenco, cercaVociElenco,
 };
 export default api;

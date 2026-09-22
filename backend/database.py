@@ -4,7 +4,8 @@ import os
 DB_PATH = os.environ.get("DB_PATH", "/data/cantieri.db")
 
 def get_conn():
-    conn = sqlite3.connect(DB_PATH)
+    # timeout: attende fino a 30 s se il worker in background sta scrivendo
+    conn = sqlite3.connect(DB_PATH, timeout=30, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -63,9 +64,110 @@ def cartella_documenti() -> str:
     return path
 
 
+def _crea_tabelle_progetti(c):
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS progetti (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            username          TEXT NOT NULL,
+            nome              TEXT NOT NULL,
+            stato             TEXT DEFAULT 'aperto',        -- aperto | chiuso
+            is_esempio        INTEGER DEFAULT 0,
+            file_eliminati_at TIMESTAMP,
+            ultima_attivita   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS progetto_documenti (
+            id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+            progetto_id        INTEGER NOT NULL,
+            nome_file          TEXT NOT NULL,
+            estensione         TEXT,
+            dimensione         INTEGER DEFAULT 0,
+            file_path          TEXT,
+            pagine             INTEGER,
+            ha_testo           INTEGER,
+            tipo_ai            TEXT,                 -- tipo riconosciuto dall'AI
+            tipo_csp           TEXT,                 -- correzione del CSP (prevale)
+            priorita           INTEGER DEFAULT 99,
+            stato              TEXT DEFAULT 'da_classificare',
+            -- da_classificare | in_coda | in_elaborazione | completato | in_attesa
+            -- | mappatura_richiesta | errore | non_supportato
+            motivo_attesa      TEXT,                 -- budget | limite_giornaliero
+            errore             TEXT,
+            n_blocchi          INTEGER DEFAULT 0,
+            blocchi_completati INTEGER DEFAULT 0,
+            elenco_id          INTEGER,              -- se il documento è un elenco prezzi
+            costo_eur          REAL DEFAULT 0,
+            created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    c.execute("CREATE INDEX IF NOT EXISTS idx_pdoc_prog ON progetto_documenti(progetto_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_pdoc_stato ON progetto_documenti(stato, priorita)")
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS progetto_estrazioni (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            documento_id INTEGER NOT NULL,
+            blocco       INTEGER NOT NULL,
+            pagine_da    INTEGER,
+            pagine_a     INTEGER,
+            dati_json    TEXT,
+            created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(documento_id, blocco)
+        )
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS elenchi_prezzi (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            username     TEXT,                       -- NULL per gli elenchi di sistema
+            livello      TEXT NOT NULL,              -- progetto | account | sistema
+            progetto_id  INTEGER,
+            nome         TEXT NOT NULL,
+            nome_file    TEXT,
+            file_path    TEXT,                       -- conservato solo finché serve la mappatura
+            stato        TEXT DEFAULT 'pronto',      -- pronto | mappatura_richiesta | errore
+            anteprima    TEXT,                       -- JSON per la schermata di mappatura
+            errore       TEXT,
+            n_voci       INTEGER DEFAULT 0,
+            created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS elenchi_prezzi_voci (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            elenco_id       INTEGER NOT NULL,
+            codice          TEXT,
+            descrizione     TEXT,
+            um              TEXT,
+            prezzo          REAL,
+            perc_manodopera REAL,
+            capitolo        TEXT
+        )
+    """)
+    c.execute("CREATE INDEX IF NOT EXISTS idx_voci_elenco ON elenchi_prezzi_voci(elenco_id)")
+
+
+def cartella_progetto(progetto_id: int) -> str:
+    base = os.path.dirname(os.path.abspath(DB_PATH))
+    path = os.path.join(base, "progetti", str(progetto_id))
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def cartella_elenchi() -> str:
+    base = os.path.dirname(os.path.abspath(DB_PATH))
+    path = os.path.join(base, "elenchi_prezzi")
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
 def init_db():
+    os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
     conn = get_conn()
     c = conn.cursor()
+    # WAL: letture e scritture contemporanee (richieste web + worker in background)
+    c.execute("PRAGMA journal_mode=WAL")
 
     # Tabella utenti (sostituisce DEMO_USERS)
     c.execute("""
@@ -153,6 +255,9 @@ def init_db():
     _aggiungi_colonna(c, "documenti", "impresa_nome", "TEXT")
     _aggiungi_colonna(c, "documenti", "file_path", "TEXT")
     _aggiungi_colonna(c, "documenti", "username", "TEXT")
+
+    # Tabelle progetti PSC ed elenchi prezzi (blocco 2)
+    _crea_tabelle_progetti(c)
 
     # Amministratori: email separate da virgola in ADMIN_EMAILS
     for email in _admin_emails():

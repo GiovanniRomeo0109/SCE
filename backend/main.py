@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 import os, pathlib
 
 from database import init_db
-from routers import agent, anagrafica, estrazione, verifica, documents
+from routers import agent, anagrafica, estrazione, verifica, documents, progetti, elenchi
 from routers.auth_router import router as auth_router
 from usage_limit import require_credits
 
@@ -31,6 +31,9 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     init_db()
+    # Worker che elabora in background i documenti dei progetti PSC
+    from services.worker_progetti import avvia_worker
+    avvia_worker()
     print("✅ Database inizializzato")
 
 # ── Healthcheck ───────────────────────────────────────────────────────────────
@@ -48,6 +51,8 @@ app.include_router(estrazione.router, prefix="/api/estrazione", tags=["Estrazion
                    dependencies=[Depends(require_credits("estrazione"))])
 app.include_router(verifica.router,   prefix="/api/verifica",   tags=["Verifica"])
 app.include_router(documents.router,  prefix="/api/documents",  tags=["Documents"])
+app.include_router(progetti.router,   prefix="/api/progetti",   tags=["Progetti PSC"])
+app.include_router(elenchi.router,    prefix="/api/elenchi",    tags=["Elenchi prezzi"])
 
 # ── Serve React build (solo in produzione) ────────────────────────────────────
 STATIC_DIR = pathlib.Path(__file__).parent / "static"

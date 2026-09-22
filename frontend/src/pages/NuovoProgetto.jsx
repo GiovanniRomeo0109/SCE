@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { estraiDati } from '../utils/api';
 import { useNotify } from '../App';
 import ReviewDati from '../components/ReviewDati';
+import ProgettiPSC from '../components/progetti/ProgettiPSC';
 
 const TIPI = [
   {
@@ -18,7 +19,7 @@ const TIPI = [
   {
     id: 'psc', path: '/nuovo/psc',
     icon: '📗', titolo: 'Piano di Sicurezza e Coordinamento', norma: 'Art. 100 — D.Lgs. 81/2008',
-    desc: 'Obbligatorio con più imprese in cantiere',
+    desc: 'Progetto PSC: carica tutti i documenti del cantiere, elaborati in background',
     suggeriti: [
       { nome: 'Contratto d\'appalto', desc: 'Committente, imprese, importo, date lavori', icona: '📄' },
       { nome: 'Visura camerale impresa', desc: 'Ragione sociale, PIVA, DL, sede legale', icona: '🏢' },
@@ -67,6 +68,9 @@ export default function NuovoProgetto() {
   const [risolti, setRisolti]       = useState({});
   const notify = useNotify();
   const nav = useNavigate();
+  // Il PSC usa il nuovo flusso a progetti (?tipo=psc), Notifica e POS restano invariati
+  const [params, setParams] = useSearchParams();
+  const modoPSC = params.get('tipo') === 'psc';
 
   const tipo = TIPI.find(t => t.id === tipoId);
 
@@ -145,6 +149,18 @@ export default function NuovoProgetto() {
     return '🖼️';
   };
 
+  if (modoPSC) {
+    return (
+      <div>
+        <div className="page-header">
+          <h1>🤖 Nuovo Progetto con AI</h1>
+          <p>Piano di Sicurezza e Coordinamento — progetti con analisi dei documenti in background</p>
+        </div>
+        <ProgettiPSC onIndietro={() => setParams({})} />
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -164,7 +180,10 @@ export default function NuovoProgetto() {
           <div className="doc-types">
             {TIPI.map(t => (
               <div key={t.id} className="doc-type-card"
-                onClick={() => { setTipoId(t.id); setStep(1); }}>
+                onClick={() => {
+                  if (t.id === 'psc') { setParams({ tipo: 'psc' }); return; }
+                  setTipoId(t.id); setStep(1);
+                }}>
                 <div className="doc-icon">{t.icon}</div>
                 <h3>{t.titolo}</h3>
                 <p style={{ fontSize: '0.7rem', color: '#C88B2A', fontWeight: 600, marginBottom: 8 }}>{t.norma}</p>

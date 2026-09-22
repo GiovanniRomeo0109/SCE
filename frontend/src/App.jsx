@@ -16,6 +16,7 @@ import WizardPSC from './components/WizardPSC';
 import WizardPOS from './components/WizardPOS';
 import VerificaDocumenti from './pages/VerificaDocumenti';
 import DemoBanner from './components/DemoBanner';
+import ElenchiPrezzi from './pages/ElenchiPrezzi';
 
 export const NotifyCtx = createContext(null);
 const NotifyContext = createContext(() => {});
@@ -82,6 +83,7 @@ export default function App() {
               <Route path="/imprese"         element={<AnagraficaImprese />} />
               <Route path="/coordinatori"    element={<AnagraficaCoordinatori />} />
               <Route path="/verifica"        element={<VerificaDocumenti />} />
+              <Route path="/elenchi-prezzi"  element={<ElenchiPrezzi />} />
               <Route path="*"               element={<Navigate to="/" />} />
             </Routes>
           </main>

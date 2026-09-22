@@ -190,6 +190,25 @@ def assicura_budget(user: dict, stima_eur: float):
         )
 
 
+def stima_costo_eur(model: str, input_tokens: int, output_tokens: int) -> float:
+    p_in, p_out = _prezzi_modello(model)
+    return (input_tokens * p_in + output_tokens * p_out) / 1_000_000 * EUR_PER_USD
+
+
+def verifica_disponibilita(user: dict, stima_eur: float):
+    """
+    Come assicura_budget ma senza eccezioni: restituisce None se si può procedere,
+    altrimenti il motivo ('budget' o 'limite_giornaliero'). Usata dal worker in background.
+    """
+    if is_admin(user):
+        return None
+    if speso_eur(user["username"]) + stima_eur > DEMO_LIMIT_EUR:
+        return "budget"
+    if chiamate_oggi(user["username"]) >= (user.get("max_calls_giorno", 20) or 20):
+        return "limite_giornaliero"
+    return None
+
+
 def registra_costo(username: str, endpoint: str, operazione_id: str, model: str, usage):
     costo_usd = calcola_costo_usd(model, usage)
     conn = get_conn()
