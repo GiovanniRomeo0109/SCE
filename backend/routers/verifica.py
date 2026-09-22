@@ -10,6 +10,7 @@ import os, json, sqlite3, base64, re, logging, pathlib
 from datetime import datetime
 from auth import get_current_user
 from usage_limit import require_credits
+from services.ai_costi import TrackedClient, stima_operazione_eur
 
 router = APIRouter()
 
@@ -164,13 +165,13 @@ def clean_json(raw: str) -> dict:
                  f"{len(nc)} NC ({result['riepilogo']['critici']} critici)")
         return result
 
-def salva_db(db, tipo, nome, risultato) -> int:
+def salva_db(db, tipo, nome, risultato, username=None) -> int:
     try:
         cur = db.execute(
-            "INSERT INTO documenti (tipo, nome_cantiere, contenuto, stato) VALUES (?,?,?,?)",
+            "INSERT INTO documenti (tipo, nome_cantiere, contenuto, stato, username) VALUES (?,?,?,?,?)",
             (f"verifica_{tipo}", nome,
              json.dumps(risultato, ensure_ascii=False),
-             "completato"))
+             "completato", username))
         db.commit()
         return cur.lastrowid
     except Exception as e:
@@ -590,8 +591,8 @@ async def verifica_psc(
     user: dict = Depends(require_credits("verifica_psc")),
 ):
     doc_info = leggi_documento(await file.read(), file.filename)
-    risultato = verifica_documento(doc_info, "psc", anthropic.Anthropic())
-    risultato["doc_id"] = salva_db(get_db(), "psc", nome_cantiere, risultato)
+    risultato = verifica_documento(doc_info, "psc", TrackedClient(user, "verifica_psc"))
+    risultato["doc_id"] = salva_db(get_db(), "psc", nome_cantiere, risultato, user["username"])
     return risultato
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -606,13 +607,14 @@ async def verifica_pos(
 ):
     if len(files) > 5:
         raise HTTPException(400, "Massimo 5 POS per volta.")
-    client = anthropic.Anthropic()
+    client = TrackedClient(user, "verifica_pos")
+    client.assicura_budget(stima_operazione_eur("verifica_pos") * len(files))
     db = get_db()
     risultati = []
     for f in files:
         doc_info = leggi_documento(await f.read(), f.filename)
         ris = verifica_documento(doc_info, "pos", client)
-        ris["doc_id"] = salva_db(db, "pos", nome_cantiere, ris)
+        ris["doc_id"] = salva_db(db, "pos", nome_cantiere, ris, user["username"])
         risultati.append(ris)
     return {"risultati": risultati, "totale_pos": len(risultati)}
 
@@ -629,7 +631,8 @@ async def verifica_congruita(
 ):
     if len(pos_files) > 5:
         raise HTTPException(400, "Massimo 5 POS per volta.")
-    client = anthropic.Anthropic()
+    client = TrackedClient(user, "verifica_congruita")
+    client.assicura_budget(stima_operazione_eur("verifica_congruita") * len(pos_files))
     db = get_db()
     skill = get_skill()
     now = datetime.now().strftime('%d/%m/%Y %H:%M')
@@ -753,7 +756,7 @@ Rispondi SOLO con JSON valido:
         ris = clean_json(raw_cong)
         log.info(f"Congruità {pos_file.filename}: {ris.get('giudizio')} — "
                  f"{len(ris.get('incongruenze',[]))} incongruenze")
-        ris["doc_id"] = salva_db(db, "congruita", nome_cantiere, ris)
+        ris["doc_id"] = salva_db(db, "congruita", nome_cantiere, ris, user["username"])
         ris["pos_filename"] = pos_file.filename
         risultati.append(ris)
 

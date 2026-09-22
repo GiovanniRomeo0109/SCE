@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';   // ← aggiungi useLocation
-import { getCommittenti, getCoordinatori, checkObbligatorieta, generaDocumento } from '../utils/api';
+import { getCommittenti, getCoordinatori, checkObbligatorieta, generaDocumento, downloadUrl } from '../utils/api';
 import { useNotify } from '../App';
 import Field from './Field';
 
@@ -331,7 +331,7 @@ export default function WizardNotifica() {
                 Il documento DOCX è pronto. Verificalo e firmalo prima dell'invio ad ASL e ITL.
               </p>
               {docId && (
-                <a href={`http://localhost:8000/api/documents/download/${docId}`} className="btn btn-gold" download>
+                <a href={downloadUrl(docId)} className="btn btn-gold" download>
                   ↓ Scarica DOCX
                 </a>
               )}

@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';   // ← aggiungi u
 
 import { useNotify } from '../App';
 import Field from './Field';
-import { getCommittenti, getCoordinatori, getImprese, checkObbligatorieta, generaDocumento, generaContenutoAI, analisiRischi } from '../utils/api';
+import { getCommittenti, getCoordinatori, getImprese, checkObbligatorieta, generaDocumento, generaContenutoAI, analisiRischi, downloadUrl } from '../utils/api';
 
 const STEPS = ['Verifica', 'Cantiere', 'Soggetti', 'Imprese', 'Lavorazioni', 'Area e Rischi', 'Costi', 'Genera'];
 
@@ -556,7 +556,7 @@ export default function WizardPSC() {
                 Verificalo e firmalo prima dell'utilizzo in cantiere.
               </p>
               {docId && (
-                <a href={`http://localhost:8000/api/documents/download/${docId}`} className="btn btn-gold" download>
+                <a href={downloadUrl(docId)} className="btn btn-gold" download>
                   ↓ Scarica PSC in DOCX
                 </a>
               )}

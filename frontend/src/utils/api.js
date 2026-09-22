@@ -36,18 +36,42 @@ export async function apiFetch(path, options = {}) {
     logout();
     throw new Error('Sessione scaduta — effettua di nuovo il login');
   }
+  if (res.status === 402) {
+    // Budget demo esaurito: avvisa l'app (banner) e interrompe l'operazione
+    const data = await res.json().catch(() => ({}));
+    const msg = data?.detail?.message || 'La demo è terminata.';
+    window.dispatchEvent(new CustomEvent('sce-demo-terminata', { detail: msg }));
+    throw new Error(msg);
+  }
   if (res.status === 429) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.detail || 'Limite giornaliero raggiunto');
+    throw new Error(dettaglioErrore(data.detail) || 'Limite giornaliero raggiunto');
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.detail || `Errore ${res.status}`);
+  if (!res.ok) throw new Error(dettaglioErrore(data.detail) || `Errore ${res.status}`);
+  // Dopo ogni chiamata riuscita la barra del budget si aggiorna
+  // (escluse le rotte /api/auth, altrimenti la barra richiamerebbe sé stessa in loop)
+  if (!path.startsWith('/api/auth/')) window.dispatchEvent(new Event('sce-budget-refresh'));
   return { data, status: res.status };
+}
+
+// Converte il campo detail di FastAPI (stringa, oggetto o lista di errori) in testo
+function dettaglioErrore(detail) {
+  if (!detail) return '';
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) return detail.map(e => e.msg || JSON.stringify(e)).join(', ');
+  return detail.message || JSON.stringify(detail);
+}
+
+// Link di download dei DOCX (il token viaggia come parametro, così funziona con <a href>)
+export function downloadUrl(docId) {
+  return `${BASE_URL}/api/documents/download/${docId}?token=${encodeURIComponent(getToken() || '')}`;
 }
 
 // ── Autenticazione ────────────────────────────────────────────────────────────
 export const getCurrentUser = () => apiFetch('/api/auth/me');
 export const getUsageStats  = () => apiFetch('/api/auth/usage');
+export const getBudget      = () => apiFetch('/api/auth/budget');
 
 // ── Storico ───────────────────────────────────────────────────────────────────
 export const getStorico       = ()   => apiFetch('/api/documents/storico');
@@ -114,7 +138,7 @@ export const estraiDati         = (formData) => apiFetch('/api/estrazione/estrai
 
 // ── Default export ────────────────────────────────────────────────────────────
 const api = {
-  apiFetch, logout, getCurrentUser, getUsageStats, register,
+  apiFetch, logout, getCurrentUser, getUsageStats, getBudget, downloadUrl, register,
   getStorico, deleteDocumento,
   getCommittenti, getImprese, getCoordinatori,
   saveCommittente, saveImpresa, saveCoordinatore,

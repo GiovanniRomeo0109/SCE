@@ -15,6 +15,7 @@ import WizardNotifica from './components/WizardNotifica';
 import WizardPSC from './components/WizardPSC';
 import WizardPOS from './components/WizardPOS';
 import VerificaDocumenti from './pages/VerificaDocumenti';
+import DemoBanner from './components/DemoBanner';
 
 export const NotifyCtx = createContext(null);
 const NotifyContext = createContext(() => {});
@@ -68,6 +69,7 @@ export default function App() {
         <div className="app-layout">
           <Sidebar onLogout={handleLogout} />
           <main className="main-content">
+            <DemoBanner />
             <Routes>
               <Route path="/"                element={<Dashboard />} />
               <Route path="/nuovo"           element={<NuovoDocumento />} />

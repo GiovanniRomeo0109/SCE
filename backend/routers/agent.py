@@ -1,10 +1,18 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
 import anthropic
 import os
 import json
 import sqlite3
+import logging
+
+from auth import get_current_user
+from usage_limit import require_credits
+from services.ai_costi import TrackedClient
+from database import get_conn, cartella_documenti
+
+log = logging.getLogger("agent")
 
 router = APIRouter()
 
@@ -163,12 +171,12 @@ def check_obbligatorieta(req: ObbligatorietaRequest):
 # ═══════════════════════════════════════════════
 
 @router.post("/genera-contenuto")
-def genera_contenuto_ai(req: ContenutoRequest):
+def genera_contenuto_ai(req: ContenutoRequest, user: dict = Depends(require_credits("genera_contenuto"))):
     """
     Usa Claude per generare il contenuto testuale delle sezioni del documento.
     Restituisce un dict con i contenuti per ogni sezione.
     """
-    client = anthropic.Anthropic()
+    client = TrackedClient(user, "genera_contenuto")
     skill = get_skill()
 
     form_json = json.dumps(req.form_data, ensure_ascii=False, indent=2)
@@ -269,76 +277,55 @@ Genera ESCLUSIVAMENTE un oggetto JSON valido con queste chiavi:
 # GENERA DOCUMENTO FINALE
 # ═══════════════════════════════════════════════
 
-def _get_db():
-    db_path = os.environ.get("DB_PATH", "data/cantieri.db")
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
 @router.post("/genera-documento")
-def genera_documento(req: GeneraDocumentoRequest):
+def genera_documento(req: GeneraDocumentoRequest, user: dict = Depends(get_current_user)):
     """
-    Salva il documento finale nel DB e restituisce doc_id.
-    Il frontend usa doc_id per scaricare/visualizzare il documento.
+    Genera il file DOCX con services/docx_generator.py, lo salva nel volume
+    e registra il documento nel DB. Il frontend usa doc_id per il download.
+    Nessuna chiamata AI: non consuma budget.
     """
-    form_json = json.dumps(req.form_data, ensure_ascii=False, indent=2)
-    contenuto_ai_json = json.dumps(req.contenuto_ai or {}, ensure_ascii=False, indent=2)
-
-    titoli = {
-        "psc": "Piano di Sicurezza e Coordinamento (PSC)",
-        "pos": "Piano Operativo di Sicurezza (POS)",
-        "notifica_preliminare": "Notifica Preliminare",
+    from services.docx_generator import genera_psc, genera_pos, genera_notifica_preliminare
+    generatori = {
+        "psc": genera_psc,
+        "pos": genera_pos,
+        "notifica_preliminare": genera_notifica_preliminare,
     }
-    titolo = titoli.get(req.tipo_documento, req.tipo_documento.upper())
-    nome_cantiere = req.nome_cantiere or "Cantiere"
+    gen = generatori.get(req.tipo_documento)
+    if not gen:
+        raise HTTPException(400, f"Tipo documento non supportato: {req.tipo_documento}")
 
-    documento_testo = f"""# {titolo}
-## Cantiere: {nome_cantiere}
-{"## Impresa: " + req.impresa_nome if req.impresa_nome else ""}
-
----
-
-### DATI GENERALI
-{form_json}
-
----
-
-### CONTENUTO TECNICO
-{contenuto_ai_json if req.contenuto_ai else "Nessun contenuto AI generato."}
-"""
+    nome_cantiere = req.nome_cantiere or req.form_data.get("citta_cantiere") or "Cantiere"
+    impresa_nome = req.impresa_nome or req.form_data.get("impresa_ragione_sociale", "")
 
     try:
-        conn = _get_db()
-        cursor = conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS documenti (
-                id            INTEGER PRIMARY KEY AUTOINCREMENT,
-                tipo          TEXT    NOT NULL,
-                nome_cantiere TEXT,
-                contenuto     TEXT,
-                form_data     TEXT,
-                stato         TEXT    DEFAULT 'completato',
-                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        cursor.execute(
-            "INSERT INTO documenti (tipo, nome_cantiere, contenuto, form_data, stato) VALUES (?, ?, ?, ?, 'completato')",
-            (req.tipo_documento, nome_cantiere, documento_testo, form_json),
-        )
-        doc_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
+        file_path = gen(req.form_data, req.contenuto_ai or {}, cartella_documenti())
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Errore salvataggio documento: {str(e)}")
+        log.exception("Errore generazione DOCX")
+        raise HTTPException(500, f"Errore nella generazione del documento: {e}")
+
+    conn = get_conn()
+    try:
+        cur = conn.execute(
+            """INSERT INTO documenti
+               (tipo, nome_cantiere, impresa_nome, contenuto, form_data, file_path, stato, username)
+               VALUES (?, ?, ?, ?, ?, ?, 'completato', ?)""",
+            (req.tipo_documento, nome_cantiere, impresa_nome,
+             json.dumps(req.contenuto_ai or {}, ensure_ascii=False),
+             json.dumps(req.form_data, ensure_ascii=False),
+             file_path, user["username"]),
+        )
+        conn.commit()
+        doc_id = cur.lastrowid
+    finally:
+        conn.close()
 
     return {
         "doc_id": doc_id,
         "tipo_documento": req.tipo_documento,
         "nome_cantiere": nome_cantiere,
         "stato": "completato",
-        "messaggio": f"{titolo} generato con successo (ID: {doc_id})",
+        "download_url": f"/api/documents/download/{doc_id}",
+        "messaggio": f"Documento generato (ID: {doc_id})",
     }
 
 
@@ -353,12 +340,12 @@ def carica_skill_rischi() -> str:
 
 
 @router.post("/analisi-rischi")
-def analisi_rischi_psc(payload: dict):
+def analisi_rischi_psc(payload: dict, user: dict = Depends(require_credits("analisi_rischi"))):
     """
     Genera la sezione 3 completa del PSC: analisi rischi, tabelle P×D, 
     interferenze tra imprese e cronoprogramma ottimizzato.
     """
-    client = anthropic.Anthropic()
+    client = TrackedClient(user, "analisi_rischi")
     skill  = carica_skill_rischi()
 
     form_data       = payload.get("form_data", {})
@@ -444,7 +431,7 @@ Per rischi R≥12 aggiungi l'avviso sulle sanzioni penali/amministrative.
 """
 
     risposta = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-6",
         max_tokens=8000,
         messages=[{"role": "user", "content": prompt}]
     )

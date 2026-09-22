@@ -91,4 +91,12 @@ async def me(current_user: dict = Depends(get_current_user)):
         "username": current_user["username"],
         "email": current_user.get("email", ""),
         "nome_cognome": current_user.get("nome_cognome", ""),
+        "is_admin": bool(current_user.get("is_admin")),
     }
+
+# ── Budget demo ────────────────────────────────────────────────────────────────
+@router.get("/budget")
+@router.get("/usage")
+async def budget(current_user: dict = Depends(get_current_user)):
+    from services.ai_costi import stato_budget
+    return stato_budget(current_user)

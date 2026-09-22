@@ -4,7 +4,7 @@ main.py aggiornato per Railway
 - Registra router auth
 - CORS aggiornato per produzione
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -13,6 +13,7 @@ import os, pathlib
 from database import init_db
 from routers import agent, anagrafica, estrazione, verifica, documents
 from routers.auth_router import router as auth_router
+from usage_limit import require_credits
 
 app = FastAPI(title="SCE — Sicurezza Cantieri Edili")
 
@@ -41,7 +42,10 @@ def health():
 app.include_router(auth_router,  prefix="/api/auth",      tags=["Auth"])
 app.include_router(agent.router, prefix="/api/agent",     tags=["Agent"])
 app.include_router(anagrafica.router, prefix="/api/anagrafica", tags=["Anagrafica"])
-app.include_router(estrazione.router, prefix="/api/estrazione", tags=["Estrazione"])
+# Estrazione: controllo budget/limiti a livello di router.
+# NB: il costo reale sarà tracciato quando estrazione.py userà TrackedClient.
+app.include_router(estrazione.router, prefix="/api/estrazione", tags=["Estrazione"],
+                   dependencies=[Depends(require_credits("estrazione"))])
 app.include_router(verifica.router,   prefix="/api/verifica",   tags=["Verifica"])
 app.include_router(documents.router,  prefix="/api/documents",  tags=["Documents"])
 

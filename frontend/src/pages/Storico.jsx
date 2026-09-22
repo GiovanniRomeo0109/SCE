@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getStorico, deleteDocumento } from '../utils/api';
+import { getStorico, deleteDocumento, downloadUrl } from '../utils/api';
 import { useNotify } from '../App';
 
 const TIPO_CONFIG = {
@@ -88,8 +88,6 @@ export default function Storico() {
                     badge: 'badge-notifica',
                     icon: '📄',
                   };
-                  const isVerifica = d.tipo && d.tipo.startsWith('verifica_');
-                  const isVerbale = d.tipo === 'verbale_incongruenze';
                   return (
                     <tr key={d.id}>
                       <td>
@@ -114,16 +112,16 @@ export default function Storico() {
                           : '—'}
                       </td>
                       <td style={{ display: 'flex', gap: 8 }}>
-                        {!isVerifica && !isVerbale && (
+                        {d.scaricabile && (
                           <a
-                            href={`/api/documents/download/${d.id}`}
+                            href={downloadUrl(d.id)}
                             className="btn btn-gold"
                             download
                           >
                             ↓ DOCX
                           </a>
                         )}
-                        {(isVerifica || isVerbale) && (
+                        {!d.scaricabile && (
                           <span style={{ fontSize: '0.75rem', color: '#8A9BB0', alignSelf: 'center' }}>
                             📊 Report in app
                           </span>

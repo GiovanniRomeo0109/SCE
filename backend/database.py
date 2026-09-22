@@ -42,6 +42,27 @@ def _migrate_usage_log_schema(cursor):
     except Exception as e:
         print(f"⚠️ Migrazione usage_log: {e}")
 
+def _aggiungi_colonna(cursor, tabella: str, colonna: str, definizione: str):
+    """Aggiunge una colonna solo se non esiste già."""
+    cols = [r[1] for r in cursor.execute(f"PRAGMA table_info({tabella})").fetchall()]
+    if colonna not in cols:
+        cursor.execute(f"ALTER TABLE {tabella} ADD COLUMN {colonna} {definizione}")
+        print(f"✅ Migrazione: aggiunta colonna {tabella}.{colonna}")
+
+
+def _admin_emails():
+    raw = os.environ.get("ADMIN_EMAILS", "giovromeo@gmail.com")
+    return [e.strip().lower() for e in raw.split(",") if e.strip()]
+
+
+def cartella_documenti() -> str:
+    """Cartella dei DOCX generati, dentro il Volume Railway (accanto al DB)."""
+    base = os.path.dirname(os.path.abspath(DB_PATH))
+    path = os.path.join(base, "documenti_generati")
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
 def init_db():
     conn = get_conn()
     c = conn.cursor()
@@ -107,6 +128,38 @@ def init_db():
         _migrate_demo_users(c)
         conn.commit()
 
+    # Tabella costi API (blocco 1 — tracciamento costi e tetto demo)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS api_costi (
+            id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+            username           TEXT NOT NULL,
+            endpoint           TEXT NOT NULL,
+            operazione_id      TEXT,
+            model              TEXT,
+            input_tokens       INTEGER DEFAULT 0,
+            output_tokens      INTEGER DEFAULT 0,
+            cache_write_tokens INTEGER DEFAULT 0,
+            cache_read_tokens  INTEGER DEFAULT 0,
+            costo_usd          REAL DEFAULT 0,
+            costo_eur          REAL DEFAULT 0,
+            created_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    c.execute("CREATE INDEX IF NOT EXISTS idx_api_costi_user ON api_costi(username, created_at)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_api_costi_op ON api_costi(endpoint, operazione_id)")
+
+    # Nuove colonne (idempotente)
+    _aggiungi_colonna(c, "users", "is_admin", "INTEGER DEFAULT 0")
+    _aggiungi_colonna(c, "documenti", "impresa_nome", "TEXT")
+    _aggiungi_colonna(c, "documenti", "file_path", "TEXT")
+    _aggiungi_colonna(c, "documenti", "username", "TEXT")
+
+    # Amministratori: email separate da virgola in ADMIN_EMAILS
+    for email in _admin_emails():
+        c.execute("UPDATE users SET is_admin = 1 WHERE LOWER(email) = ? OR LOWER(username) = ?",
+                  (email, email))
+    conn.commit()
+
     conn.close()
     print("✅ Database inizializzato correttamente")
 
@@ -146,10 +199,11 @@ def get_user_by_email(email: str):
 def create_user(username: str, email: str, nome_cognome: str, password_hash: str):
     conn = get_conn()
     try:
+        admin = 1 if email.strip().lower() in _admin_emails() else 0
         conn.execute("""
-            INSERT INTO users (username, email, nome_cognome, password_hash)
-            VALUES (?, ?, ?, ?)
-        """, (username, email, nome_cognome, password_hash))
+            INSERT INTO users (username, email, nome_cognome, password_hash, is_admin)
+            VALUES (?, ?, ?, ?, ?)
+        """, (username, email, nome_cognome, password_hash, admin))
         conn.commit()
         return True
     except sqlite3.IntegrityError:

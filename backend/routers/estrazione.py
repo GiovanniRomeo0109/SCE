@@ -1,11 +1,18 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from typing import List
-import anthropic
 import base64
 import json
 import io
 
-router = APIRouter(prefix="/api/estrazione", tags=["estrazione"])
+from auth import get_current_user
+from services.ai_costi import TrackedClient, stima_operazione_eur
+
+# Il prefisso /api/estrazione è già assegnato in main.py (qui non va ripetuto,
+# altrimenti l'indirizzo diventerebbe /api/estrazione/api/estrazione/...)
+router = APIRouter()
+
+# Estrazione di dati strutturati: compito semplice, basta Haiku (costo ~3x inferiore)
+MODELLO_ESTRAZIONE = "claude-haiku-4-5-20251001"
 
 SYSTEM_PROMPT = """Sei un assistente specializzato nell'estrazione di dati da documenti edilizi e professionali italiani.
 Leggi attentamente il documento e estrai tutti i dati strutturati presenti.
@@ -81,8 +88,7 @@ def parse_json_risposta(testo: str) -> dict:
     return json.loads(testo.strip())
 
 
-async def analizza_singolo_documento(file: UploadFile) -> dict:
-    client = anthropic.Anthropic()
+async def analizza_singolo_documento(file: UploadFile, client: TrackedClient) -> dict:
     contenuto = await file.read()
     nome = file.filename.lower()
 
@@ -90,7 +96,7 @@ async def analizza_singolo_documento(file: UploadFile) -> dict:
         if nome.endswith('.pdf'):
             b64 = base64.standard_b64encode(contenuto).decode('utf-8')
             risposta = client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model=MODELLO_ESTRAZIONE,
                 max_tokens=2000,
                 system=SYSTEM_PROMPT,
                 messages=[{
@@ -113,7 +119,7 @@ async def analizza_singolo_documento(file: UploadFile) -> dict:
             media_type = "image/png" if nome.endswith('.png') else "image/jpeg"
             b64 = base64.standard_b64encode(contenuto).decode('utf-8')
             risposta = client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model=MODELLO_ESTRAZIONE,
                 max_tokens=2000,
                 system=SYSTEM_PROMPT,
                 messages=[{
@@ -135,7 +141,7 @@ async def analizza_singolo_documento(file: UploadFile) -> dict:
         elif nome.endswith('.docx'):
             testo = estrai_testo_docx(contenuto)
             risposta = client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model=MODELLO_ESTRAZIONE,
                 max_tokens=2000,
                 system=SYSTEM_PROMPT,
                 messages=[{
@@ -147,7 +153,7 @@ async def analizza_singolo_documento(file: UploadFile) -> dict:
         elif nome.endswith(('.xlsx', '.xls')):
             testo = estrai_testo_xlsx(contenuto)
             risposta = client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model=MODELLO_ESTRAZIONE,
                 max_tokens=2000,
                 system=SYSTEM_PROMPT,
                 messages=[{
@@ -240,13 +246,21 @@ def unisci_risultati(risultati: list) -> dict:
 
 
 @router.post("/analizza")
-async def analizza_documenti(files: List[UploadFile] = File(...)):
+@router.post("/estrai")          # indirizzo usato da api.js (estraiDati / estraiDocumento)
+async def analizza_documenti(
+    files: List[UploadFile] = File(...),
+    user: dict = Depends(get_current_user),
+):
     if not files:
         raise HTTPException(status_code=400, detail="Nessun file caricato")
 
+    # Un'operazione = tutti i file caricati insieme; stima per numero di file
+    client = TrackedClient(user, "estrazione")
+    client.assicura_budget(stima_operazione_eur("estrazione") * len(files))
+
     risultati = []
     for file in files:
-        r = await analizza_singolo_documento(file)
+        r = await analizza_singolo_documento(file, client)
         risultati.append(r)
 
     return unisci_risultati(risultati)

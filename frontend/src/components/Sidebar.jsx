@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import UsageBar from './UsageBar';
 
 const links = [
   { section: 'Documenti' },
@@ -13,7 +14,11 @@ const links = [
   { to: '/coordinatori',   icon: '📐', label: 'Coordinatori' },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onLogout }) {
+  let utente = {};
+  try { utente = JSON.parse(localStorage.getItem('sce_user') || '{}'); } catch {}
+  const nome = utente.nome_cognome || utente.username || 'Utente';
+
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
@@ -37,6 +42,28 @@ export default function Sidebar() {
           )
         )}
       </nav>
+      {/* Budget demo + utente + logout, spinti in fondo alla barra */}
+      <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <UsageBar />
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px',
+          fontSize: '0.78rem', color: '#C9D3DE',
+        }}>
+          <span>👤</span>
+          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                title={utente.username}>
+            {nome}
+          </span>
+          {onLogout && (
+            <button onClick={onLogout} title="Esci" style={{
+              background: 'none', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6,
+              color: '#C9D3DE', cursor: 'pointer', fontSize: '0.75rem', padding: '3px 8px',
+            }}>
+              Esci
+            </button>
+          )}
+        </div>
+      </div>
       <div className="sidebar-footer">D.Lgs. 81/2008 — v1.0</div>
     </aside>
   );

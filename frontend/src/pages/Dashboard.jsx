@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getStorico } from '../utils/api';
+import { getStorico, downloadUrl } from '../utils/api';
 
 const TIPO_CONFIG = {
   psc:                  { label: 'PSC',      badge: 'badge-psc',      icon: '📗' },
@@ -79,9 +79,11 @@ export default function Dashboard() {
                         {d.created_at ? new Date(d.created_at).toLocaleDateString('it-IT') : '—'}
                       </td>
                       <td>
-                        <a href={`/api/documents/download/${d.id}`} className="btn btn-ghost btn-sm" download>
-                          ↓ DOCX
-                        </a>
+                        {d.scaricabile && (
+                          <a href={downloadUrl(d.id)} className="btn btn-ghost btn-sm" download>
+                            ↓ DOCX
+                          </a>
+                        )}
                       </td>
                     </tr>
                   );
