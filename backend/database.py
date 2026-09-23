@@ -64,6 +64,90 @@ def cartella_documenti() -> str:
     return path
 
 
+def _crea_tabelle_anagrafica(c):
+    """Tabelle usate da routers/anagrafica.py (schema originale del progetto)."""
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS committenti (
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            tipo                TEXT    NOT NULL DEFAULT 'persona_fisica',
+            nome                TEXT,
+            cognome             TEXT,
+            ragione_sociale     TEXT,
+            codice_fiscale      TEXT,
+            piva                TEXT,
+            indirizzo           TEXT,
+            citta               TEXT,
+            cap                 TEXT,
+            provincia           TEXT,
+            telefono            TEXT,
+            email               TEXT,
+            pec                 TEXT,
+            created_at          TEXT    DEFAULT (datetime('now')),
+            updated_at          TEXT    DEFAULT (datetime('now'))
+        )
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS imprese (
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            ragione_sociale     TEXT    NOT NULL,
+            codice_fiscale      TEXT,
+            piva                TEXT    NOT NULL,
+            indirizzo           TEXT,
+            citta               TEXT,
+            cap                 TEXT,
+            provincia           TEXT,
+            telefono            TEXT,
+            email               TEXT,
+            pec                 TEXT,
+            cciaa               TEXT,
+            numero_cciaa        TEXT,
+            inail_pat           TEXT,
+            inps                TEXT,
+            cassa_edile         TEXT,
+            ccnl                TEXT    DEFAULT 'CCNL Edilizia Industria',
+            -- Datore di Lavoro
+            nome_dl             TEXT,
+            cognome_dl          TEXT,
+            -- RSPP
+            nome_rspp           TEXT,
+            cognome_rspp        TEXT,
+            -- Medico Competente
+            nome_mc             TEXT,
+            cognome_mc          TEXT,
+            -- RLS
+            nome_rls            TEXT,
+            cognome_rls         TEXT,
+            created_at          TEXT    DEFAULT (datetime('now')),
+            updated_at          TEXT    DEFAULT (datetime('now'))
+        )
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS coordinatori (
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome                TEXT    NOT NULL,
+            cognome             TEXT    NOT NULL,
+            codice_fiscale      TEXT,
+            ordine_professionale TEXT,
+            numero_ordine       TEXT,
+            provincia_ordine    TEXT,
+            titolo_studio       TEXT,
+            anni_esperienza     INTEGER,
+            attestato_corso     TEXT,
+            data_corso          TEXT,
+            data_aggiornamento  TEXT,
+            indirizzo           TEXT,
+            citta               TEXT,
+            cap                 TEXT,
+            provincia           TEXT,
+            telefono            TEXT,
+            email               TEXT,
+            pec                 TEXT,
+            created_at          TEXT    DEFAULT (datetime('now')),
+            updated_at          TEXT    DEFAULT (datetime('now'))
+        )
+    """)
+
+
 def _crea_tabelle_progetti(c):
     c.execute("""
         CREATE TABLE IF NOT EXISTS progetti (
@@ -146,6 +230,44 @@ def _crea_tabelle_progetti(c):
         )
     """)
     c.execute("CREATE INDEX IF NOT EXISTS idx_voci_elenco ON elenchi_prezzi_voci(elenco_id)")
+
+    # ── Blocco 3: tappe del PSC e questionario del sopralluogo ──────────────────
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS progetto_tappe (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            progetto_id       INTEGER NOT NULL,
+            numero            INTEGER NOT NULL,              -- 1..12
+            stato             TEXT DEFAULT 'da_generare',
+            -- da_generare | in_coda | in_generazione | generata | errore
+            contenuto_json    TEXT,                          -- versione corrente (AI o CSP)
+            modificata_a_mano INTEGER DEFAULT 0,             -- esclusa dalla cascata
+            da_ricontrollare  INTEGER DEFAULT 0,             -- saltata dalla cascata: il CSP deve verificarla
+            da_aggiornare     INTEGER DEFAULT 0,             -- una tappa precedente è cambiata ma questa non è stata rigenerata
+            nota_csp          TEXT,                          -- nota per la prossima (ri)generazione
+            errore            TEXT,
+            costo_eur         REAL DEFAULT 0,
+            generata_at       TIMESTAMP,
+            updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(progetto_id, numero)
+        )
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS progetto_domande (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            progetto_id  INTEGER NOT NULL,
+            tappa        INTEGER NOT NULL,
+            origine      TEXT DEFAULT 'domanda',             -- domanda | da_verificare
+            testo        TEXT NOT NULL,
+            risposta     TEXT,
+            stato        TEXT DEFAULT 'aperta',              -- aperta | risposta | applicata
+            created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            risposta_at  TIMESTAMP
+        )
+    """)
+    c.execute("CREATE INDEX IF NOT EXISTS idx_domande_prog ON progetto_domande(progetto_id, tappa)")
+    _aggiungi_colonna(c, "progetti", "data_inizio_lavori", "TEXT")
+    _aggiungi_colonna(c, "progetti", "bozza_stato", "TEXT")          # in_corso | completata | interrotta
+    _aggiungi_colonna(c, "progetti", "bozza_messaggio", "TEXT")
 
 
 def cartella_progetto(progetto_id: int) -> str:
@@ -255,6 +377,9 @@ def init_db():
     _aggiungi_colonna(c, "documenti", "impresa_nome", "TEXT")
     _aggiungi_colonna(c, "documenti", "file_path", "TEXT")
     _aggiungi_colonna(c, "documenti", "username", "TEXT")
+
+    # Anagrafica: committenti, imprese, coordinatori (tabelle mancanti dopo la riscrittura del DB)
+    _crea_tabelle_anagrafica(c)
 
     # Tabelle progetti PSC ed elenchi prezzi (blocco 2)
     _crea_tabelle_progetti(c)

@@ -33,7 +33,7 @@ export default function Sidebar({ onLogout }) {
           ) : (
             <NavLink key={l.to} to={l.to} end={l.to === '/'}
               className={({ isActive }) => isActive ? 'active' : ''}
-              style={l.highlight ? { color: '#C88B2A', fontWeight: 600 } : {}}>
+              style={({ isActive }) => (l.highlight && !isActive ? { color: '#C88B2A', fontWeight: 600 } : {})}>
               <span>{l.icon}</span>{l.label}
               {l.highlight && <span style={{
                 marginLeft: 'auto', fontSize: '0.6rem', background: '#C88B2A',

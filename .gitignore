@@ -25,3 +25,15 @@ dist-ssr
 .env
 backend/venv
 frontend/node_modules
+
+# Dati locali: non vanno mai nel repository (contengono dati degli utenti)
+*.db
+*.db-wal
+*.db-shm
+backend/documenti_generati/
+backend/progetti/
+backend/elenchi_prezzi/
+backend/logs/
+backend/static/
+__pycache__/
+*.pyc

@@ -157,6 +157,19 @@ export const eliminaElenco      = (id)             => apiFetch(`/api/elenchi/${i
 export const mappaturaElenco    = (id, m)          => apiFetch(`/api/elenchi/${id}/mappatura`, { method: 'POST', body: JSON.stringify(m) });
 export const cercaVociElenco    = (id, q)          => apiFetch(`/api/elenchi/${id}/voci?q=${encodeURIComponent(q || '')}`);
 
+// ── Tappe PSC e questionario (blocco 3) ───────────────────────────────────────
+export const getTappe          = (id)              => apiFetch(`/api/progetti/${id}/tappe`);
+export const stimaTappe        = (id, numeri)      => apiFetch(`/api/progetti/${id}/tappe/stima?numeri=${numeri.join(',')}`);
+export const avviaBozza        = (id)              => apiFetch(`/api/progetti/${id}/tappe/bozza`, { method: 'POST' });
+export const interrompiTappe   = (id)              => apiFetch(`/api/progetti/${id}/tappe/interrompi`, { method: 'POST' });
+export const generaTappa       = (id, n, nota)     => apiFetch(`/api/progetti/${id}/tappe/${n}/genera`, { method: 'POST', body: JSON.stringify({ nota: nota || null }) });
+export const salvaTappa        = (id, n, sezioni)  => apiFetch(`/api/progetti/${id}/tappe/${n}`, { method: 'PUT', body: JSON.stringify({ sezioni }) });
+export const tappaVerificata   = (id, n)           => apiFetch(`/api/progetti/${id}/tappe/${n}/verificata`, { method: 'POST' });
+export const salvaDatiCSP      = (id, dati)        => apiFetch(`/api/progetti/${id}/dati-csp`, { method: 'PATCH', body: JSON.stringify(dati) });
+export const getQuestionario   = (id)              => apiFetch(`/api/progetti/${id}/questionario`);
+export const rispondiDomanda   = (id, domandaId, risposta) => apiFetch(`/api/progetti/${id}/questionario/${domandaId}`, { method: 'PATCH', body: JSON.stringify({ risposta }) });
+export const applicaRisposte   = (id)              => apiFetch(`/api/progetti/${id}/questionario/applica`, { method: 'POST' });
+
 // ── Default export ────────────────────────────────────────────────────────────
 const api = {
   apiFetch, logout, getCurrentUser, getUsageStats, getBudget, downloadUrl, register,
@@ -174,5 +187,7 @@ const api = {
   caricaDocumentiProgetto, correggiTipoDocumento, rielaboraDocumento,
   eliminaDocumentoProgetto, getDatiDocumento, mappaturaDocumento,
   getElenchi, caricaElenco, rinominaElenco, eliminaElenco, mappaturaElenco, cercaVociElenco,
+  getTappe, stimaTappe, avviaBozza, interrompiTappe, generaTappa, salvaTappa, tappaVerificata,
+  salvaDatiCSP, getQuestionario, rispondiDomanda, applicaRisposte,
 };
 export default api;

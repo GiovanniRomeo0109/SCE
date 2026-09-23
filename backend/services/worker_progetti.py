@@ -52,6 +52,9 @@ def avvia_worker():
         conn.commit()
     finally:
         conn.close()
+    # Tappe PSC interrotte da un riavvio: tornano in coda
+    from services.tappe_psc import ripristina_dopo_riavvio
+    ripristina_dopo_riavvio()
     threading.Thread(target=_ciclo, name="worker-progetti", daemon=True).start()
     log.info("Worker progetti avviato")
 
@@ -141,6 +144,12 @@ def _passo() -> bool:
         return True
     if prossimo:
         _elabora_documento(dict(prossimo))
+        return True
+    # Documenti finiti: si passa alle tappe del PSC (una alla volta, in ordine)
+    from services import tappe_psc
+    tappa = tappe_psc.prossima_tappa_in_coda()
+    if tappa:
+        tappe_psc.esegui_tappa(tappa)
         return True
     return False
 
