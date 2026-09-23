@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getProgetti, creaProgetto, eliminaProgetto } from '../../utils/api';
 import { useNotify } from '../../App';
@@ -19,14 +19,13 @@ export default function ProgettiPSC({ onIndietro }) {
   const [nome, setNome] = useState('');
   const [creazione, setCreazione] = useState(false);
 
-  const carica = () => {
+  const carica = useCallback(() => {
     getProgetti()
       .then(r => setProgetti(Array.isArray(r.data) ? r.data : []))
       .catch(e => { setProgetti([]); notifyRef.current(e.message, 'error'); });
-  };
+  }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { if (!aperto) carica(); }, [aperto]);
+  useEffect(() => { if (!aperto) carica(); }, [aperto, carica]);
 
   const apri = (id) => setParams({ tipo: 'psc', progetto: String(id) });
   const chiudi = () => setParams({ tipo: 'psc' });

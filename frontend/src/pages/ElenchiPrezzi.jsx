@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   getElenchi, caricaElenco, rinominaElenco, eliminaElenco, mappaturaElenco, cercaVociElenco,
 } from '../utils/api';
@@ -24,13 +24,13 @@ export default function ElenchiPrezzi() {
   const [consulta, setConsulta] = useState(null);       // { elenco, q, voci }
   const inputRef = useRef(null);
 
-  const carica = () => {
+  const carica = useCallback(() => {
     getElenchi()
       .then(r => setDati(r.data))
       .catch(e => { setDati({ elenchi: [] }); notifyRef.current(e.message, 'error'); });
-  };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(carica, []);
+  }, []);
+
+  useEffect(() => { carica(); }, [carica]);
 
   const invia = async (file) => {
     if (!file) return;
