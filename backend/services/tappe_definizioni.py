@@ -80,11 +80,15 @@ TAPPE = [
             "Proponi il cronoprogramma in SETTIMANE (metodologia, punto 15): durata delle fasi e "
             "sottofasi, sequenza, lavorazioni contemporanee. Se nei documenti c'è già un "
             "cronoprogramma, usalo; altrimenti stimalo da lavorazioni e quantità. La settimana 1 "
-            "coincide con la data di inizio lavori indicata dal CSP (se assente: DA VERIFICARE)."),
+            "coincide con la data di inizio lavori indicata dal CSP (se assente: DA VERIFICARE). "
+            "Per ogni riga stima gli ADDETTI MEDI presenti contemporaneamente in cantiere per quella "
+            "fase (numero intero): servono a calcolare gli uomini-giorno (settimane × 5 giorni × addetti). "
+            "Usa solo numeri nelle colonne Settimana inizio, Durata, Settimana fine e Addetti medi."),
         "sezioni": [
             {"id": "impostazione", "titolo": "Impostazione del cronoprogramma", "tipo": T},
             {"id": "cronoprogramma", "titolo": "Cronoprogramma (settimane)", "tipo": TAB,
-             "colonne": ["Cod.", "Fase / lavorazione", "Impresa", "Settimana inizio", "Durata (settimane)", "Settimana fine", "Contemporanea a"]},
+             # "Addetti medi" è in fondo: le tabelle già generate restano allineate colonna per colonna
+             "colonne": ["Cod.", "Fase / lavorazione", "Impresa", "Settimana inizio", "Durata (settimane)", "Settimana fine", "Contemporanea a", "Addetti medi"]},
         ],
     },
     {

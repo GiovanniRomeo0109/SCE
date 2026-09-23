@@ -269,6 +269,40 @@ def _crea_tabelle_progetti(c):
     _aggiungi_colonna(c, "progetti", "bozza_stato", "TEXT")          # in_corso | completata | interrotta
     _aggiungi_colonna(c, "progetti", "bozza_messaggio", "TEXT")
 
+    # ── Blocco 4: costi della sicurezza e uomini-giorno ─────────────────────────
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS progetto_costi (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            progetto_id      INTEGER NOT NULL,
+            chiave           TEXT NOT NULL,              -- misura normalizzata (identifica la riga tra le rigenerazioni)
+            ordine           INTEGER DEFAULT 0,
+            attiva           INTEGER DEFAULT 1,          -- 0 = misura non più presente nella tappa 11
+            categoria        TEXT,
+            misura           TEXT,
+            um_misura        TEXT,
+            quantita_tappa   REAL,                       -- quantità proposta dalla tappa 11
+            quantita         REAL,                       -- quantità usata nel calcolo (modificabile)
+            quantita_csp     INTEGER DEFAULT 0,
+            stato            TEXT DEFAULT 'da_abbinare', -- da_abbinare | abbinata | da_definire | manuale
+            livello          TEXT,                       -- progetto | account | sistema | manuale
+            elenco_id        INTEGER,
+            elenco_nome      TEXT,
+            codice           TEXT,
+            descrizione_voce TEXT,
+            um_voce          TEXT,
+            prezzo           REAL,
+            nota             TEXT,
+            updated_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(progetto_id, chiave)
+        )
+    """)
+    _aggiungi_colonna(c, "progetti", "costi_da_abbinare", "INTEGER DEFAULT 0")
+    _aggiungi_colonna(c, "progetti", "costi_messaggio", "TEXT")
+    _aggiungi_colonna(c, "progetti", "importo_lavori", "REAL")
+    _aggiungi_colonna(c, "progetti", "incidenza_manodopera", "REAL")      # percentuale indicata dal CSP
+    _aggiungi_colonna(c, "progetti", "costo_giornaliero", "REAL")         # euro/giorno per lavoratore
+    _aggiungi_colonna(c, "progetti", "ug_scelta", "TEXT")                 # cronoprogramma | incidenza
+
 
 def cartella_progetto(progetto_id: int) -> str:
     base = os.path.dirname(os.path.abspath(DB_PATH))

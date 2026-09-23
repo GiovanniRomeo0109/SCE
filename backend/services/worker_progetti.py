@@ -151,6 +151,12 @@ def _passo() -> bool:
     if tappa:
         tappe_psc.esegui_tappa(tappa)
         return True
+    # Poi l'abbinamento dei prezzi delle misure di sicurezza (blocco 4)
+    from services import costi_sicurezza
+    pid = costi_sicurezza.progetto_da_abbinare()
+    if pid:
+        costi_sicurezza.abbina(pid)
+        return True
     return False
 
 

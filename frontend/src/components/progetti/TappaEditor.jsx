@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { salvaTappa, generaTappa, tappaVerificata, salvaDatiCSP, stimaTappe } from '../../utils/api';
 import { useNotify } from '../../App';
+import UominiGiorno from './UominiGiorno';
+import StimaCosti from './StimaCosti';
 
 const DAV = 'DA VERIFICARE';
 const haDAV = (t) => (t || '').toUpperCase().includes(DAV);
@@ -237,6 +239,14 @@ export default function TappaEditor({ progettoId, tappa, tappe, dataInizio, occu
           )}
         </div>
       ))}
+
+      {/* Blocco 4: uomini-giorno (tappa 5) e stima dei costi (tappa 11), sui dati salvati della tappa */}
+      {tappa.contenuto && !attiva && tappa.numero === 5 && (
+        <UominiGiorno progettoId={progettoId} versione={`${tappa.generata_at}|${contenutoServer.length}|${dataInizio}`} />
+      )}
+      {tappa.contenuto && !attiva && tappa.numero === 11 && (
+        <StimaCosti progettoId={progettoId} versione={`${tappa.generata_at}|${contenutoServer.length}`} />
+      )}
 
       {/* Dati da verificare segnalati dall'AI */}
       {tappa.contenuto?.da_verificare?.length > 0 && (

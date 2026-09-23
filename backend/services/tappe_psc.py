@@ -260,6 +260,9 @@ def salva_modifica_csp(progetto_id: int, numero: int, dati: dict) -> dict:
     nuovo = td.normalizza(numero, dati)
     _aggiorna(progetto_id, numero, contenuto_json=json.dumps(nuovo, ensure_ascii=False),
               modificata_a_mano=1, da_ricontrollare=0, da_aggiornare=0, stato="generata", errore=None)
+    if numero == 11:
+        from services import costi_sicurezza
+        costi_sicurezza.sincronizza(progetto_id)
     return cascata(progetto_id, numero)
 
 
@@ -474,6 +477,10 @@ def esegui_tappa(tappa: dict):
               modificata_a_mano=0, da_ricontrollare=0, da_aggiornare=0, nota_csp=None, errore=None,
               costo_eur=(tappa.get("costo_eur") or 0) + costo, generata_at=_ora())
     _aggiorna_domande(progetto_id, numero, nuovo)
+    if numero == 11:
+        # Blocco 4: la stima dei costi segue la tabella delle misure (abbinamento prezzi in background)
+        from services import costi_sicurezza
+        costi_sicurezza.sincronizza(progetto_id)
 
     # Cascata: le successive già generate si rigenerano (quelle in coda per la bozza lo sono già)
     cascata(progetto_id, numero)

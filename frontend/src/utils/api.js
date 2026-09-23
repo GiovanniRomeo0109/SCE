@@ -170,6 +170,18 @@ export const getQuestionario   = (id)              => apiFetch(`/api/progetti/${
 export const rispondiDomanda   = (id, domandaId, risposta) => apiFetch(`/api/progetti/${id}/questionario/${domandaId}`, { method: 'PATCH', body: JSON.stringify({ risposta }) });
 export const applicaRisposte   = (id)              => apiFetch(`/api/progetti/${id}/questionario/applica`, { method: 'POST' });
 
+// ── Costi della sicurezza, uomini-giorno ed Excel (blocco 4) ──────────────────
+export const getCosti          = (id)              => apiFetch(`/api/progetti/${id}/costi`);
+export const aggiornaCosti     = (id)              => apiFetch(`/api/progetti/${id}/costi/aggiorna`, { method: 'POST' });
+export const cercaVociCosti    = (id, q, um)       => apiFetch(`/api/progetti/${id}/costi/cerca-voci?q=${encodeURIComponent(q || '')}&um=${encodeURIComponent(um || '')}`);
+export const modificaCosto     = (id, rigaId, dati) => apiFetch(`/api/progetti/${id}/costi/${rigaId}`, { method: 'PATCH', body: JSON.stringify(dati) });
+export const getUominiGiorno   = (id)              => apiFetch(`/api/progetti/${id}/uomini-giorno`);
+export const salvaUominiGiorno = (id, dati, campi) => apiFetch(`/api/progetti/${id}/uomini-giorno`, { method: 'PATCH', body: JSON.stringify({ ...dati, campi }) });
+// Link di download degli Excel (il token viaggia come parametro, come per i DOCX)
+export function exportUrl(id, nome) {
+  return `${BASE_URL}/api/progetti/${id}/export/${nome}.xlsx?token=${encodeURIComponent(getToken() || '')}`;
+}
+
 // ── Default export ────────────────────────────────────────────────────────────
 const api = {
   apiFetch, logout, getCurrentUser, getUsageStats, getBudget, downloadUrl, register,
@@ -189,5 +201,6 @@ const api = {
   getElenchi, caricaElenco, rinominaElenco, eliminaElenco, mappaturaElenco, cercaVociElenco,
   getTappe, stimaTappe, avviaBozza, interrompiTappe, generaTappa, salvaTappa, tappaVerificata,
   salvaDatiCSP, getQuestionario, rispondiDomanda, applicaRisposte,
+  getCosti, aggiornaCosti, cercaVociCosti, modificaCosto, getUominiGiorno, salvaUominiGiorno, exportUrl,
 };
 export default api;
