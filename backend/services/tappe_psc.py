@@ -382,12 +382,18 @@ def costruisci_richiesta(progetto: dict, numero: int, tappe: list, fascicolo: di
         "messages": [{"role": "user", "content": [
             {"type": "text", "text": fascicolo["testo"], "cache_control": {"type": "ephemeral"}},
             {"type": "text", "text": f"DATA DI INIZIO LAVORI (indicata dal CSP): {data_inizio}\n\n"
-                                     f"RISPOSTE DEL CSP AL QUESTIONARIO DEL SOPRALLUOGO:\n{_risposte_per_prompt(progetto['id'])}"},
+                                     f"RISPOSTE DEL CSP AL QUESTIONARIO DEL SOPRALLUOGO:\n{_risposte_per_prompt(progetto['id'])}"
+                                     + (f"\n\n{_presidi_per_prompt(progetto['id'])}" if numero == 9 else "")},
             {"type": "text", "text": "TAPPE PRECEDENTI (versione corrente):\n\n" + _tappe_precedenti_testo(tappe, numero)},
             {"type": "text", "text": istruzioni},
         ]}],
         "max_tokens": d.get("max_tokens", MAX_TOKENS_DEFAULT),
     }
+
+
+def _presidi_per_prompt(progetto_id: int) -> str:
+    from services.presidi import testo_per_prompt
+    return testo_per_prompt(progetto_id) or "Presidi di emergenza non ancora cercati: indicali come DA VERIFICARE."
 
 
 def _conta_token_stimati(richiesta: dict) -> tuple:
@@ -473,10 +479,17 @@ def esegui_tappa(tappa: dict):
         return
 
     nuovo = td.normalizza(numero, dati)
-    _aggiorna(progetto_id, numero, stato="generata", contenuto_json=json.dumps(nuovo, ensure_ascii=False),
+    # Il contenuto si salva mentre la tappa è ancora "in_generazione": lo stato "generata" arriva
+    # solo DOPO aver accodato la cascata, così non esiste un istante in cui la catena sembra finita
+    # (l'interfaccia smetterebbe di aggiornarsi prima che partano le tappe successive).
+    _aggiorna(progetto_id, numero, contenuto_json=json.dumps(nuovo, ensure_ascii=False),
               modificata_a_mano=0, da_ricontrollare=0, da_aggiornare=0, nota_csp=None, errore=None,
               costo_eur=(tappa.get("costo_eur") or 0) + costo, generata_at=_ora())
     _aggiorna_domande(progetto_id, numero, nuovo)
+    if numero == 9:
+        # Blocco 5: la tabella dei presidi resta quella cercata/confermata dal CSP
+        from services.presidi import aggiorna_tappa_9
+        aggiorna_tappa_9(progetto_id)
     if numero == 11:
         # Blocco 4: la stima dei costi segue la tabella delle misure (abbinamento prezzi in background)
         from services import costi_sicurezza
@@ -484,6 +497,7 @@ def esegui_tappa(tappa: dict):
 
     # Cascata: le successive già generate si rigenerano (quelle in coda per la bozza lo sono già)
     cascata(progetto_id, numero)
+    _aggiorna(progetto_id, numero, stato="generata")
 
     # Fine della catena?
     ancora = [t for t in leggi_tappe(progetto_id) if t["stato"] in STATI_ATTIVI]

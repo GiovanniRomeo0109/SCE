@@ -182,6 +182,30 @@ export function exportUrl(id, nome) {
   return `${BASE_URL}/api/progetti/${id}/export/${nome}.xlsx?token=${encodeURIComponent(getToken() || '')}`;
 }
 
+// ── Presidi di emergenza e schemi di cantiere (blocco 5) ──────────────────────
+const P = (id) => `/api/progetti/${id}`;
+export const getPresidi         = (id)             => apiFetch(`${P(id)}/presidi`);
+export const salvaIndirizzo     = (id, indirizzo)  => apiFetch(`${P(id)}/indirizzo`, { method: 'PATCH', body: JSON.stringify({ indirizzo_cantiere: indirizzo }) });
+export const cercaPresidi       = (id)             => apiFetch(`${P(id)}/presidi/cerca`, { method: 'POST' });
+export const aggiungiPresidio   = (id, dati)       => apiFetch(`${P(id)}/presidi`, { method: 'POST', body: JSON.stringify(dati) });
+export const modificaPresidio   = (id, pid, dati)  => apiFetch(`${P(id)}/presidi/${pid}`, { method: 'PATCH', body: JSON.stringify(dati) });
+export const eliminaPresidio    = (id, pid)        => apiFetch(`${P(id)}/presidi/${pid}`, { method: 'DELETE' });
+export const getSchemi          = (id)             => apiFetch(`${P(id)}/schemi`);
+export const creaSchema         = (id, nome)       => apiFetch(`${P(id)}/schemi`, { method: 'POST', body: JSON.stringify({ nome }) });
+export const getSchema          = (id, sid)        => apiFetch(`${P(id)}/schemi/${sid}`);
+export const salvaSchema        = (id, sid, dati)  => apiFetch(`${P(id)}/schemi/${sid}`, { method: 'PATCH', body: JSON.stringify(dati) });
+export const duplicaSchema      = (id, sid)        => apiFetch(`${P(id)}/schemi/${sid}/duplica`, { method: 'POST' });
+export const eliminaSchema      = (id, sid)        => apiFetch(`${P(id)}/schemi/${sid}`, { method: 'DELETE' });
+export const caricaSfondo       = (id, sid, fd)    => apiFetch(`${P(id)}/schemi/${sid}/sfondo`, { method: 'POST', body: fd });
+export const sfondoDaDocumento  = (id, sid, documentoId, pagina) => apiFetch(`${P(id)}/schemi/${sid}/sfondo-documento`, { method: 'POST', body: JSON.stringify({ documento_id: documentoId, pagina }) });
+export const togliSfondo        = (id, sid)        => apiFetch(`${P(id)}/schemi/${sid}/sfondo`, { method: 'DELETE' });
+export function sfondoUrl(id, sid, versione) {
+  return `${BASE_URL}${P(id)}/schemi/${sid}/sfondo.png?token=${encodeURIComponent(getToken() || '')}&v=${encodeURIComponent(versione || '')}`;
+}
+export function dxfUrl(id, sid) {
+  return `${BASE_URL}${P(id)}/schemi/${sid}/export.dxf?token=${encodeURIComponent(getToken() || '')}`;
+}
+
 // ── Default export ────────────────────────────────────────────────────────────
 const api = {
   apiFetch, logout, getCurrentUser, getUsageStats, getBudget, downloadUrl, register,
@@ -202,5 +226,8 @@ const api = {
   getTappe, stimaTappe, avviaBozza, interrompiTappe, generaTappa, salvaTappa, tappaVerificata,
   salvaDatiCSP, getQuestionario, rispondiDomanda, applicaRisposte,
   getCosti, aggiornaCosti, cercaVociCosti, modificaCosto, getUominiGiorno, salvaUominiGiorno, exportUrl,
+  getPresidi, salvaIndirizzo, cercaPresidi, aggiungiPresidio, modificaPresidio, eliminaPresidio,
+  getSchemi, creaSchema, getSchema, salvaSchema, duplicaSchema, eliminaSchema, caricaSfondo,
+  sfondoDaDocumento, togliSfondo, sfondoUrl, dxfUrl,
 };
 export default api;

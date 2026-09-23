@@ -16,7 +16,7 @@ function statoTappa(t) {
   return { testo: 'Da generare', colore: '#8A9BB0', icona: '○' };
 }
 
-export default function TappePSC({ progettoId }) {
+export default function TappePSC({ progettoId, onApriSchema }) {
   const notify = useNotify();
   const notifyRef = useRef(notify);
   notifyRef.current = notify;
@@ -138,7 +138,7 @@ export default function TappePSC({ progettoId }) {
         {/* Editor */}
         <TappaEditor progettoId={progettoId} tappa={tappa} tappe={tappe}
           dataInizio={dati.data_inizio_lavori} occupato={false}
-          onAggiorna={carica} onModificata={onModificata} />
+          onAggiorna={carica} onModificata={onModificata} onApriSchema={onApriSchema} />
       </div>
     </div>
   );

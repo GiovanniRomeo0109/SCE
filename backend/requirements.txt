@@ -16,3 +16,5 @@ pypdf==5.1.0
 pdfplumber==0.11.4
 pypdfium2==4.30.0
 Pillow==10.4.0
+# Blocco 5 — esportazione DXF dello schema di cantiere
+ezdxf==1.4.4

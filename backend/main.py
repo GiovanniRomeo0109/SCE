@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 import os, pathlib
 
 from database import init_db
-from routers import agent, anagrafica, estrazione, verifica, documents, progetti, elenchi, tappe, costi
+from routers import agent, anagrafica, estrazione, verifica, documents, progetti, elenchi, tappe, costi, cantiere
 from routers.auth_router import router as auth_router
 from usage_limit import require_credits
 
@@ -54,6 +54,7 @@ app.include_router(documents.router,  prefix="/api/documents",  tags=["Documents
 app.include_router(progetti.router,   prefix="/api/progetti",   tags=["Progetti PSC"])
 app.include_router(tappe.router,      prefix="/api/progetti",   tags=["Tappe PSC"])
 app.include_router(costi.router,      prefix="/api/progetti",   tags=["Costi e tempi"])
+app.include_router(cantiere.router,   prefix="/api/progetti",   tags=["Emergenze e schemi"])
 app.include_router(elenchi.router,    prefix="/api/elenchi",    tags=["Elenchi prezzi"])
 
 # ── Serve React build (solo in produzione) ────────────────────────────────────

@@ -303,10 +303,57 @@ def _crea_tabelle_progetti(c):
     _aggiungi_colonna(c, "progetti", "costo_giornaliero", "REAL")         # euro/giorno per lavoratore
     _aggiungi_colonna(c, "progetti", "ug_scelta", "TEXT")                 # cronoprogramma | incidenza
 
+    # ── Blocco 5: presidi di emergenza e schemi di cantiere ─────────────────────
+    _aggiungi_colonna(c, "progetti", "indirizzo_cantiere", "TEXT")
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS progetto_presidi (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            progetto_id  INTEGER NOT NULL,
+            ordine       INTEGER DEFAULT 0,
+            tipo         TEXT,                    -- pronto_soccorso | vigili_fuoco | carabinieri | polizia_locale
+                                                  -- | guardia_medica | farmacia | numero_emergenza | altro
+            nome         TEXT,
+            indirizzo    TEXT,
+            telefono     TEXT,
+            distanza     TEXT,
+            percorso     TEXT,
+            fonte_url    TEXT,
+            fonte_titolo TEXT,
+            confermato   INTEGER DEFAULT 0,
+            manuale      INTEGER DEFAULT 0,
+            created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS progetto_schemi (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            progetto_id   INTEGER NOT NULL,
+            nome          TEXT NOT NULL,
+            includi_psc   INTEGER DEFAULT 0,
+            sfondo_path   TEXT,                   -- PNG conservato finché esiste il progetto
+            sfondo_w      INTEGER,
+            sfondo_h      INTEGER,
+            sfondo_origine TEXT,
+            scala_json    TEXT,                   -- {"m_per_px", "punti", "distanza_m"}
+            elementi_json TEXT DEFAULT '[]',
+            created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
 
 def cartella_progetto(progetto_id: int) -> str:
     base = os.path.dirname(os.path.abspath(DB_PATH))
     path = os.path.join(base, "progetti", str(progetto_id))
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def cartella_schemi(progetto_id: int) -> str:
+    """Sfondi degli schemi di cantiere: fuori dalla cartella dei documenti, così la pulizia
+    dei file originali (chiusura o 30 giorni di inattività) non li cancella."""
+    base = os.path.dirname(os.path.abspath(DB_PATH))
+    path = os.path.join(base, "schemi", str(progetto_id))
     os.makedirs(path, exist_ok=True)
     return path
 

@@ -228,6 +228,9 @@ def elimina_progetto(progetto_id: int, user: dict = Depends(get_current_user)):
         conn.execute("""DELETE FROM progetto_estrazioni WHERE documento_id IN
                         (SELECT id FROM progetto_documenti WHERE progetto_id = ?)""", (progetto_id,))
         conn.execute("DELETE FROM progetto_documenti WHERE progetto_id = ?", (progetto_id,))
+        # dati dei blocchi 3-5 collegati al progetto
+        for tabella in ("progetto_tappe", "progetto_domande", "progetto_costi", "progetto_presidi", "progetto_schemi"):
+            conn.execute(f"DELETE FROM {tabella} WHERE progetto_id = ?", (progetto_id,))
         conn.execute("DELETE FROM progetti WHERE id = ?", (progetto_id,))
         conn.commit()
     finally:
@@ -235,6 +238,9 @@ def elimina_progetto(progetto_id: int, user: dict = Depends(get_current_user)):
     for e in elenchi:
         gestione_elenchi.elimina_elenco(e["id"])
     worker_progetti.elimina_file_progetto(progetto_id)
+    import shutil
+    from database import cartella_schemi
+    shutil.rmtree(cartella_schemi(progetto_id), ignore_errors=True)
     return {"ok": True}
 
 

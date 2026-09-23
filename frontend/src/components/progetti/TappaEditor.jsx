@@ -3,6 +3,7 @@ import { salvaTappa, generaTappa, tappaVerificata, salvaDatiCSP, stimaTappe } fr
 import { useNotify } from '../../App';
 import UominiGiorno from './UominiGiorno';
 import StimaCosti from './StimaCosti';
+import PresidiEmergenza from './PresidiEmergenza';
 
 const DAV = 'DA VERIFICARE';
 const haDAV = (t) => (t || '').toUpperCase().includes(DAV);
@@ -23,7 +24,7 @@ function Area({ value, onChange, minRows = 2, stile = {}, disabled }) {
   );
 }
 
-export default function TappaEditor({ progettoId, tappa, tappe, dataInizio, occupato, onAggiorna, onModificata }) {
+export default function TappaEditor({ progettoId, tappa, tappe, dataInizio, occupato, onAggiorna, onModificata, onApriSchema }) {
   const notify = useNotify();
   const [sezioni, setSezioni] = useState([]);
   const [modificata, setModificata] = useState(false);
@@ -243,6 +244,9 @@ export default function TappaEditor({ progettoId, tappa, tappe, dataInizio, occu
       {/* Blocco 4: uomini-giorno (tappa 5) e stima dei costi (tappa 11), sui dati salvati della tappa */}
       {tappa.contenuto && !attiva && tappa.numero === 5 && (
         <UominiGiorno progettoId={progettoId} versione={`${tappa.generata_at}|${contenutoServer.length}|${dataInizio}`} />
+      )}
+      {tappa.contenuto && !attiva && tappa.numero === 9 && (
+        <PresidiEmergenza progettoId={progettoId} onAggiorna={onAggiorna} onApriSchema={onApriSchema} />
       )}
       {tappa.contenuto && !attiva && tappa.numero === 11 && (
         <StimaCosti progettoId={progettoId} versione={`${tappa.generata_at}|${contenutoServer.length}`} />
