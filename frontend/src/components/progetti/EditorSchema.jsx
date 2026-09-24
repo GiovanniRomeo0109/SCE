@@ -26,7 +26,7 @@ const nuovoId = () => `e${Date.now().toString(36)}${(contatore++).toString(36)}`
 const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 const fmt = (n, d = 1) => Number(n).toLocaleString('it-IT', { maximumFractionDigits: d });
 
-export default function EditorSchema({ progettoId, schemaId, catalogo, documentiSfondo, onChiudi }) {
+export default function EditorSchema({ progettoId, schemaId, catalogo, documentiSfondo, onChiudi, solaLettura }) {
   const notify = useNotify();
   const notifyRef = useRef(notify);
   notifyRef.current = notify;
@@ -73,7 +73,7 @@ export default function EditorSchema({ progettoId, schemaId, catalogo, documenti
   // ── Salvataggio automatico ─────────────────────────────────────────────────
   const idCaricato = s?.id;
   useEffect(() => {
-    if (!idCaricato) return;
+    if (!idCaricato || solaLettura) return;
     if (!caricato.current) { caricato.current = true; return; }
     setStato('Modifiche non salvate…');
     const t = setTimeout(() => {
@@ -83,7 +83,7 @@ export default function EditorSchema({ progettoId, schemaId, catalogo, documenti
         .catch(e => { setStato('Errore di salvataggio'); notifyRef.current(e.message, 'error'); });
     }, 700);
     return () => clearTimeout(t);
-  }, [elementi, progettoId, schemaId, idCaricato]);
+  }, [elementi, progettoId, schemaId, idCaricato, solaLettura]);
 
   const salvaSubito = (dati) => salvaSchema(progettoId, schemaId, dati)
     .then(r => { setS(x => ({ ...x, ...r.data, elementi: undefined })); return r; });
@@ -129,6 +129,7 @@ export default function EditorSchema({ progettoId, schemaId, catalogo, documenti
 
   // ── Mouse / touch sull'area di disegno ─────────────────────────────────────
   const giuSfondo = (e) => {
+    if (solaLettura) return;
     if (e.button !== undefined && e.button !== 0) return;
     const p = puntoSvg(e);
     if (strumento === 'seleziona') { setSel(null); return; }
@@ -155,6 +156,7 @@ export default function EditorSchema({ progettoId, schemaId, catalogo, documenti
   };
 
   const giuElemento = (e, el, modo = 'sposta', extra = {}) => {
+    if (solaLettura) return;
     if (strumento !== 'seleziona') return;
     e.stopPropagation();
     setSel(el.id);
@@ -291,6 +293,7 @@ export default function EditorSchema({ progettoId, schemaId, catalogo, documenti
         </div>
       </div>
       <div className="warn-box" style={{ fontSize: '0.8rem', marginBottom: 10 }} data-testid="avviso-cad">⚠️ {AVVISO}</div>
+      {solaLettura && <div className="info-box" style={{ fontSize: '0.8rem', marginBottom: 10 }}>🔒 Progetto chiuso: lo schema è in sola lettura (puoi esportarlo).</div>}
 
       {/* Barra strumenti */}
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 10 }}>

@@ -12,7 +12,6 @@ import AnagraficaCommittenti from './pages/AnagraficaCommittenti';
 import AnagraficaImprese from './pages/AnagraficaImprese';
 import AnagraficaCoordinatori from './pages/AnagraficaCoordinatori';
 import WizardNotifica from './components/WizardNotifica';
-import WizardPSC from './components/WizardPSC';
 import WizardPOS from './components/WizardPOS';
 import VerificaDocumenti from './pages/VerificaDocumenti';
 import DemoBanner from './components/DemoBanner';
@@ -76,7 +75,8 @@ export default function App() {
               <Route path="/nuovo"           element={<NuovoDocumento />} />
               <Route path="/nuovo-progetto"  element={<NuovoProgetto />} />
               <Route path="/nuovo/notifica"  element={<WizardNotifica />} />
-              <Route path="/nuovo/psc"       element={<WizardPSC />} />
+              {/* Il vecchio WizardPSC è sostituito dal flusso a progetti */}
+              <Route path="/nuovo/psc"       element={<Navigate to="/nuovo-progetto?tipo=psc" replace />} />
               <Route path="/nuovo/pos"       element={<WizardPOS />} />
               <Route path="/storico"         element={<Storico />} />
               <Route path="/committenti"     element={<AnagraficaCommittenti />} />

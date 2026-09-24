@@ -7,7 +7,7 @@ import EditorSchema from './EditorSchema';
  * Scheda "Schema di cantiere": elenco degli schemi del progetto (uno per fase, se serve)
  * e apertura dell'editor. Solo gli schemi con "da includere nel PSC" andranno nel documento finale.
  */
-export default function SchemiCantiere({ progettoId }) {
+export default function SchemiCantiere({ progettoId, solaLettura }) {
   const notify = useNotify();
   const notifyRef = useRef(notify);
   notifyRef.current = notify;
@@ -48,7 +48,7 @@ export default function SchemiCantiere({ progettoId }) {
   if (!d) return <div style={{ padding: 30, color: '#8A9BB0' }}>Caricamento schemi…</div>;
   if (aperto) {
     return <EditorSchema progettoId={progettoId} schemaId={aperto} catalogo={d.catalogo}
-      documentiSfondo={d.documenti_sfondo} onChiudi={() => setAperto(null)} />;
+      documentiSfondo={d.documenti_sfondo} onChiudi={() => setAperto(null)} solaLettura={solaLettura} />;
   }
 
   return (

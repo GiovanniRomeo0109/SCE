@@ -8,6 +8,7 @@ import MappaturaColonne from '../MappaturaColonne';
 import TappePSC from './TappePSC';
 import Questionario from './Questionario';
 import SchemiCantiere from './SchemiCantiere';
+import DocumentoFinale from './DocumentoFinale';
 
 const COLORI_STATO = {
   completato: '#27AE60', in_elaborazione: '#1A3A5C', in_coda: '#8A9BB0',
@@ -34,7 +35,7 @@ export default function ProgettoDettaglio({ progettoId, onIndietro }) {
   const [datiAperti, setDatiAperti] = useState(null);      // { documento, blocchi, elenco }
   const [mappatura, setMappatura] = useState(null);        // { docId, anteprima }
   const [inCorso, setInCorso] = useState(false);
-  const [vista, setVista] = useState('documenti');        // documenti | tappe | questionario | schema
+  const [vista, setVista] = useState('documenti');        // documenti | tappe | questionario | schema | finale
   const inputRef = useRef(null);
   // notify cambia a ogni render di App: lo tengo in un ref per non rilanciare il caricamento
   const notifyRef = useRef(notify);
@@ -169,9 +170,15 @@ export default function ProgettoDettaglio({ progettoId, onIndietro }) {
         );
       })}
 
+      {chiuso && (
+        <div className="info-box" style={{ marginBottom: 12, fontSize: '0.84rem' }} data-testid="avviso-chiuso">
+          🔒 Progetto chiuso: è in sola lettura e i file originali sono stati eliminati. Puoi consultarlo e scaricare il PSC dalla scheda "Documento finale".
+        </div>
+      )}
+
       {/* Schede */}
       <div style={{ display: 'flex', gap: 4, borderBottom: '2px solid #EEF1F5', margin: '4px 0 18px' }}>
-        {[['documenti', `📄 Documenti (${p.documenti.length})`], ['tappe', '🧭 Tappe PSC'], ['questionario', '📝 Questionario sopralluogo'], ['schema', '🗺️ Schema di cantiere']].map(([k, label]) => (
+        {[['documenti', `📄 Documenti (${p.documenti.length})`], ['tappe', '🧭 Tappe PSC'], ['questionario', '📝 Questionario sopralluogo'], ['schema', '🗺️ Schema di cantiere'], ['finale', '📄 Documento finale']].map(([k, label]) => (
           <button key={k} onClick={() => setVista(k)} data-testid={`scheda-${k}`}
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 14px', fontSize: '0.88rem',
               fontWeight: vista === k ? 700 : 500, color: vista === k ? '#1A3A5C' : '#8A9BB0',
@@ -181,8 +188,9 @@ export default function ProgettoDettaglio({ progettoId, onIndietro }) {
         ))}
       </div>
 
-      {vista === 'tappe' && <TappePSC progettoId={progettoId} onApriSchema={() => setVista('schema')} />}
-      {vista === 'schema' && <SchemiCantiere progettoId={progettoId} />}
+      {vista === 'tappe' && <TappePSC progettoId={progettoId} onApriSchema={() => setVista('schema')} solaLettura={chiuso} />}
+      {vista === 'schema' && <SchemiCantiere progettoId={progettoId} solaLettura={chiuso} />}
+      {vista === 'finale' && <DocumentoFinale progettoId={progettoId} onChiuso={carica} />}
       {vista === 'questionario' && <Questionario progettoId={progettoId} onApplicate={() => setVista('tappe')} />}
 
       {vista === 'documenti' && (<>

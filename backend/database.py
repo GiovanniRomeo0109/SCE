@@ -365,6 +365,65 @@ def cartella_elenchi() -> str:
     return path
 
 
+def _migra_blocco_6(c):
+    admin = _admin_emails()[0] if _admin_emails() else None
+    for tabella in ("committenti", "imprese", "coordinatori"):
+        _aggiungi_colonna(c, tabella, "username", "TEXT")
+        if admin:
+            # Schede create prima del blocco 6 (senza proprietario) → account amministratore
+            c.execute(f"UPDATE {tabella} SET username = ? WHERE username IS NULL", (admin,))
+        c.execute(f"CREATE INDEX IF NOT EXISTS idx_{tabella}_user ON {tabella}(username)")
+    _aggiungi_colonna(c, "coordinatori", "firma_path", "TEXT")
+    _aggiungi_colonna(c, "coordinatori", "predefinito", "INTEGER DEFAULT 0")
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS studio_profilo (
+            username   TEXT PRIMARY KEY,
+            nome       TEXT, indirizzo TEXT, piva TEXT, telefono TEXT, email TEXT, pec TEXT,
+            logo_path  TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS progetto_checklist (
+            progetto_id INTEGER NOT NULL,
+            voce        TEXT NOT NULL,              -- es. "C.3"
+            esito       TEXT,                       -- si | no | np
+            motivazione TEXT,
+            updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (progetto_id, voce)
+        )
+    """)
+    _aggiungi_colonna(c, "documenti", "progetto_id", "INTEGER")
+    _aggiungi_colonna(c, "documenti", "revisione", "INTEGER")
+    _aggiungi_colonna(c, "progetti", "coordinatore_id", "INTEGER")
+    _aggiungi_colonna(c, "progetti", "esempio_sorgente", "INTEGER")   # copia: id del progetto di esempio originale
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS esempio_pubblicato (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            progetto_id  INTEGER NOT NULL,
+            pubblicato_da TEXT,
+            created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS esempio_copie (
+            username    TEXT PRIMARY KEY,           -- ogni account riceve l'esempio una sola volta
+            sorgente_id INTEGER,
+            copia_id    INTEGER,
+            created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+
+def cartella_studio(username: str) -> str:
+    """Logo dello studio e firme dei coordinatori dell'account."""
+    import hashlib
+    base = os.path.dirname(os.path.abspath(DB_PATH))
+    path = os.path.join(base, "studi", hashlib.sha1(username.encode()).hexdigest()[:16])
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
 def init_db():
     os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
     conn = get_conn()
@@ -464,6 +523,9 @@ def init_db():
 
     # Tabelle progetti PSC ed elenchi prezzi (blocco 2)
     _crea_tabelle_progetti(c)
+
+    # Blocco 6: anagrafica personale per account, studio, checklist, revisioni, esempio
+    _migra_blocco_6(c)
 
     # Amministratori: email separate da virgola in ADMIN_EMAILS
     for email in _admin_emails():

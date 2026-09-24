@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getTappe, avviaBozza, interrompiTappe, stimaTappe } from '../../utils/api';
+import { getTappe, avviaBozza, interrompiTappe, stimaTappe, tappeManuali } from '../../utils/api';
 import { useNotify } from '../../App';
 import TappaEditor from './TappaEditor';
 
@@ -16,7 +16,7 @@ function statoTappa(t) {
   return { testo: 'Da generare', colore: '#8A9BB0', icona: '○' };
 }
 
-export default function TappePSC({ progettoId, onApriSchema }) {
+export default function TappePSC({ progettoId, onApriSchema, solaLettura }) {
   const notify = useNotify();
   const notifyRef = useRef(notify);
   notifyRef.current = notify;
@@ -67,6 +67,12 @@ export default function TappePSC({ progettoId, onApriSchema }) {
     finally { setAvvio(false); }
   };
 
+  const compilaAMano = async () => {
+    if (!window.confirm('Creare le tappe vuote da compilare a mano, senza AI? Le potrai riempire sezione per sezione.')) return;
+    try { const r = await tappeManuali(progettoId); notify(`${r.data.create.length} tappe pronte da compilare`, 'success'); carica(); }
+    catch (e) { notify(e.message, 'error'); }
+  };
+
   const interrompi = async () => {
     if (!window.confirm('Interrompere la generazione? Le tappe già completate restano.')) return;
     try { await interrompiTappe(progettoId); carica(); } catch (e) { notify(e.message, 'error'); }
@@ -96,7 +102,10 @@ export default function TappePSC({ progettoId, onApriSchema }) {
               : attenzione ? `${attenzione} tappe da ricontrollare o aggiornare` : 'Puoi generare le tappe una alla volta o tutte insieme'}
           </div>
         </div>
-        {inCorso ? (
+        {!inCorso && !solaLettura && !documenti.completati && !documenti.in_lavorazione && generate < 12 && (
+          <button className="btn btn-ghost" onClick={compilaAMano} data-testid="compila-senza-documenti">✍️ Compila senza documenti</button>
+        )}
+        {solaLettura ? null : inCorso ? (
           <button className="btn btn-ghost" onClick={interrompi}>⏹ Interrompi</button>
         ) : (
           <button className="btn btn-gold" onClick={bozza} disabled={!docPronti || avvio}>
@@ -137,7 +146,7 @@ export default function TappePSC({ progettoId, onApriSchema }) {
 
         {/* Editor */}
         <TappaEditor progettoId={progettoId} tappa={tappa} tappe={tappe}
-          dataInizio={dati.data_inizio_lavori} occupato={false}
+          dataInizio={dati.data_inizio_lavori} occupato={!!solaLettura}
           onAggiorna={carica} onModificata={onModificata} onApriSchema={onApriSchema} />
       </div>
     </div>

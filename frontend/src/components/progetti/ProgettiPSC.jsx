@@ -105,7 +105,7 @@ export default function ProgettiPSC({ onIndietro }) {
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
                       <button className="btn btn-gold btn-sm" onClick={() => apri(p.id)} style={{ marginRight: 6 }}>Apri →</button>
-                      {!p.is_esempio && <button className="btn btn-danger btn-sm" onClick={() => elimina(p)}>🗑</button>}
+                      <button className="btn btn-danger btn-sm" onClick={() => elimina(p)}>🗑</button>
                     </td>
                   </tr>
                 ))}

@@ -1,17 +1,44 @@
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+"""
+routers/anagrafica.py — Committenti, imprese e coordinatori
+
+Dal blocco 6 l'anagrafica è PERSONALE per account (1 account = 1 studio): ogni account vede e
+modifica solo le schede che ha creato. Le schede create prima (senza proprietario) sono state
+assegnate all'account amministratore. Indirizzi e formato delle risposte sono invariati.
+Coordinatori: firma (immagine) e "predefinito" (chi firma il PSC se non si sceglie altro).
+"""
+import os
+import uuid
 from typing import Optional
-import sqlite3
-from database import get_db
+
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, model_validator
+
+from auth import get_current_user
+from database import get_conn, cartella_studio
 
 router = APIRouter()
+
+MAX_MB_IMMAGINE = 5
 
 
 # ═══════════════════════════════════════════════
 # SCHEMAS
 # ═══════════════════════════════════════════════
 
-class CommittenteIn(BaseModel):
+class ModelloAnagrafica(BaseModel):
+    """I moduli inviano i campi facoltativi vuoti come "": diventano None (prima un "" in un campo
+    numerico, es. anni_esperienza, faceva fallire il salvataggio con errore 422)."""
+    @model_validator(mode="before")
+    @classmethod
+    def vuoti_a_none(cls, dati):
+        if isinstance(dati, dict):
+            return {k: (None if v == "" and k in cls.model_fields and not cls.model_fields[k].is_required() else v)
+                    for k, v in dati.items()}
+        return dati
+
+
+class CommittenteIn(ModelloAnagrafica):
     tipo: str = "persona_fisica"
     nome: Optional[str] = None
     cognome: Optional[str] = None
@@ -27,7 +54,7 @@ class CommittenteIn(BaseModel):
     pec: Optional[str] = None
 
 
-class ImpresaIn(BaseModel):
+class ImpresaIn(ModelloAnagrafica):
     ragione_sociale: str
     codice_fiscale: Optional[str] = None
     piva: str
@@ -54,7 +81,7 @@ class ImpresaIn(BaseModel):
     cognome_rls: Optional[str] = None
 
 
-class CoordinatoreIn(BaseModel):
+class CoordinatoreIn(ModelloAnagrafica):
     nome: str
     cognome: str
     codice_fiscale: Optional[str] = None
@@ -75,59 +102,113 @@ class CoordinatoreIn(BaseModel):
     pec: Optional[str] = None
 
 
+
+TABELLE = {
+    "committenti":  (CommittenteIn, "cognome, nome, ragione_sociale", "Committente"),
+    "imprese":      (ImpresaIn, "ragione_sociale", "Impresa"),
+    "coordinatori": (CoordinatoreIn, "predefinito DESC, cognome, nome", "Coordinatore"),
+}
+
+
+def _colonne(conn, tabella):
+    return {r[1] for r in conn.execute(f"PRAGMA table_info({tabella})").fetchall()}
+
+
+def _elenco(tabella, user):
+    conn = get_conn()
+    try:
+        rows = conn.execute(f"SELECT * FROM {tabella} WHERE username = ? ORDER BY {TABELLE[tabella][1]}",
+                            (user["username"],)).fetchall()
+    finally:
+        conn.close()
+    return [_pubblica(dict(r)) for r in rows]
+
+
+def _pubblica(d):
+    """Non espone il percorso del file della firma, solo se esiste."""
+    if "firma_path" in d:
+        d["ha_firma"] = bool(d["firma_path"] and os.path.exists(d["firma_path"]))
+        d.pop("firma_path")
+    return d
+
+
+def _scheda(tabella, id, user):
+    conn = get_conn()
+    try:
+        row = conn.execute(f"SELECT * FROM {tabella} WHERE id = ? AND username = ?", (id, user["username"])).fetchone()
+    finally:
+        conn.close()
+    if not row:
+        raise HTTPException(404, f"{TABELLE[tabella][2]} non trovato")
+    return dict(row)
+
+
+def _crea(tabella, data, user):
+    campi = data.dict()
+    conn = get_conn()
+    try:
+        cur = conn.execute(
+            f"INSERT INTO {tabella} ({', '.join(campi)}, username) VALUES ({', '.join('?' * len(campi))}, ?)",
+            (*campi.values(), user["username"]))
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def _aggiorna(tabella, id, data, user):
+    _scheda(tabella, id, user)
+    campi = data.dict()
+    conn = get_conn()
+    try:
+        extra = ", updated_at=datetime('now')" if "updated_at" in _colonne(conn, tabella) else ""
+        conn.execute(f"UPDATE {tabella} SET {', '.join(k + '=?' for k in campi)}{extra} WHERE id=? AND username=?",
+                     (*campi.values(), id, user["username"]))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _elimina(tabella, id, user):
+    r = _scheda(tabella, id, user)
+    if r.get("firma_path") and os.path.exists(r["firma_path"]):
+        os.remove(r["firma_path"])
+    conn = get_conn()
+    try:
+        conn.execute(f"DELETE FROM {tabella} WHERE id=? AND username=?", (id, user["username"]))
+        conn.commit()
+    finally:
+        conn.close()
+
+
 # ═══════════════════════════════════════════════
 # COMMITTENTI
 # ═══════════════════════════════════════════════
 
 @router.get("/committenti")
-def list_committenti(db: sqlite3.Connection = Depends(get_db)):
-    rows = db.execute(
-        "SELECT * FROM committenti ORDER BY cognome, nome, ragione_sociale"
-    ).fetchall()
-    return [dict(r) for r in rows]
+def list_committenti(user: dict = Depends(get_current_user)):
+    return _elenco("committenti", user)
 
 
 @router.get("/committenti/{id}")
-def get_committente(id: int, db: sqlite3.Connection = Depends(get_db)):
-    row = db.execute("SELECT * FROM committenti WHERE id=?", (id,)).fetchone()
-    if not row:
-        raise HTTPException(404, "Committente non trovato")
-    return dict(row)
+def get_committente(id: int, user: dict = Depends(get_current_user)):
+    return _pubblica(_scheda("committenti", id, user))
 
 
 @router.post("/committenti", status_code=201)
-def create_committente(data: CommittenteIn, db: sqlite3.Connection = Depends(get_db)):
-    cur = db.execute("""
-        INSERT INTO committenti
-            (tipo, nome, cognome, ragione_sociale, codice_fiscale, piva,
-             indirizzo, citta, cap, provincia, telefono, email, pec)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """, (data.tipo, data.nome, data.cognome, data.ragione_sociale,
-          data.codice_fiscale, data.piva, data.indirizzo, data.citta,
-          data.cap, data.provincia, data.telefono, data.email, data.pec))
-    db.commit()
-    return {"id": cur.lastrowid, "message": "Committente creato"}
+def create_committente(data: CommittenteIn, user: dict = Depends(get_current_user)):
+    return {"id": _crea("committenti", data, user), "message": "Committente creato"}
 
 
 @router.put("/committenti/{id}")
-def update_committente(id: int, data: CommittenteIn, db: sqlite3.Connection = Depends(get_db)):
-    db.execute("""
-        UPDATE committenti SET
-            tipo=?, nome=?, cognome=?, ragione_sociale=?, codice_fiscale=?,
-            piva=?, indirizzo=?, citta=?, cap=?, provincia=?,
-            telefono=?, email=?, pec=?, updated_at=datetime('now')
-        WHERE id=?
-    """, (data.tipo, data.nome, data.cognome, data.ragione_sociale,
-          data.codice_fiscale, data.piva, data.indirizzo, data.citta,
-          data.cap, data.provincia, data.telefono, data.email, data.pec, id))
-    db.commit()
+def update_committente(id: int, data: CommittenteIn, user: dict = Depends(get_current_user)):
+    _aggiorna("committenti", id, data, user)
     return {"message": "Committente aggiornato"}
 
 
 @router.delete("/committenti/{id}")
-def delete_committente(id: int, db: sqlite3.Connection = Depends(get_db)):
-    db.execute("DELETE FROM committenti WHERE id=?", (id,))
-    db.commit()
+def delete_committente(id: int, user: dict = Depends(get_current_user)):
+    _elimina("committenti", id, user)
     return {"message": "Committente eliminato"}
 
 
@@ -136,71 +217,29 @@ def delete_committente(id: int, db: sqlite3.Connection = Depends(get_db)):
 # ═══════════════════════════════════════════════
 
 @router.get("/imprese")
-def list_imprese(db: sqlite3.Connection = Depends(get_db)):
-    rows = db.execute(
-        "SELECT * FROM imprese ORDER BY ragione_sociale"
-    ).fetchall()
-    return [dict(r) for r in rows]
+def list_imprese(user: dict = Depends(get_current_user)):
+    return _elenco("imprese", user)
 
 
 @router.get("/imprese/{id}")
-def get_impresa(id: int, db: sqlite3.Connection = Depends(get_db)):
-    row = db.execute("SELECT * FROM imprese WHERE id=?", (id,)).fetchone()
-    if not row:
-        raise HTTPException(404, "Impresa non trovata")
-    return dict(row)
+def get_impresa(id: int, user: dict = Depends(get_current_user)):
+    return _pubblica(_scheda("imprese", id, user))
 
 
 @router.post("/imprese", status_code=201)
-def create_impresa(data: ImpresaIn, db: sqlite3.Connection = Depends(get_db)):
-    cur = db.execute("""
-        INSERT INTO imprese
-            (ragione_sociale, codice_fiscale, piva, indirizzo, citta, cap, provincia,
-             telefono, email, pec, cciaa, numero_cciaa, inail_pat, inps, cassa_edile, ccnl,
-             nome_dl, cognome_dl, nome_rspp, cognome_rspp,
-             nome_mc, cognome_mc, nome_rls, cognome_rls)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """, (data.ragione_sociale, data.codice_fiscale, data.piva,
-          data.indirizzo, data.citta, data.cap, data.provincia,
-          data.telefono, data.email, data.pec,
-          data.cciaa, data.numero_cciaa, data.inail_pat, data.inps, data.cassa_edile, data.ccnl,
-          data.nome_dl, data.cognome_dl,
-          data.nome_rspp, data.cognome_rspp,
-          data.nome_mc, data.cognome_mc,
-          data.nome_rls, data.cognome_rls))
-    db.commit()
-    return {"id": cur.lastrowid, "message": "Impresa creata"}
+def create_impresa(data: ImpresaIn, user: dict = Depends(get_current_user)):
+    return {"id": _crea("imprese", data, user), "message": "Impresa creata"}
 
 
 @router.put("/imprese/{id}")
-def update_impresa(id: int, data: ImpresaIn, db: sqlite3.Connection = Depends(get_db)):
-    db.execute("""
-        UPDATE imprese SET
-            ragione_sociale=?, codice_fiscale=?, piva=?, indirizzo=?, citta=?,
-            cap=?, provincia=?, telefono=?, email=?, pec=?,
-            cciaa=?, numero_cciaa=?, inail_pat=?, inps=?, cassa_edile=?, ccnl=?,
-            nome_dl=?, cognome_dl=?,
-            nome_rspp=?, cognome_rspp=?,
-            nome_mc=?, cognome_mc=?,
-            nome_rls=?, cognome_rls=?,
-            updated_at=datetime('now')
-        WHERE id=?
-    """, (data.ragione_sociale, data.codice_fiscale, data.piva,
-          data.indirizzo, data.citta, data.cap, data.provincia,
-          data.telefono, data.email, data.pec,
-          data.cciaa, data.numero_cciaa, data.inail_pat, data.inps, data.cassa_edile, data.ccnl,
-          data.nome_dl, data.cognome_dl,
-          data.nome_rspp, data.cognome_rspp,
-          data.nome_mc, data.cognome_mc,
-          data.nome_rls, data.cognome_rls, id))
-    db.commit()
+def update_impresa(id: int, data: ImpresaIn, user: dict = Depends(get_current_user)):
+    _aggiorna("imprese", id, data, user)
     return {"message": "Impresa aggiornata"}
 
 
 @router.delete("/imprese/{id}")
-def delete_impresa(id: int, db: sqlite3.Connection = Depends(get_db)):
-    db.execute("DELETE FROM imprese WHERE id=?", (id,))
-    db.commit()
+def delete_impresa(id: int, user: dict = Depends(get_current_user)):
+    _elimina("imprese", id, user)
     return {"message": "Impresa eliminata"}
 
 
@@ -209,62 +248,106 @@ def delete_impresa(id: int, db: sqlite3.Connection = Depends(get_db)):
 # ═══════════════════════════════════════════════
 
 @router.get("/coordinatori")
-def list_coordinatori(db: sqlite3.Connection = Depends(get_db)):
-    rows = db.execute(
-        "SELECT * FROM coordinatori ORDER BY cognome, nome"
-    ).fetchall()
-    return [dict(r) for r in rows]
+def list_coordinatori(user: dict = Depends(get_current_user)):
+    return _elenco("coordinatori", user)
 
 
 @router.get("/coordinatori/{id}")
-def get_coordinatore(id: int, db: sqlite3.Connection = Depends(get_db)):
-    row = db.execute("SELECT * FROM coordinatori WHERE id=?", (id,)).fetchone()
-    if not row:
-        raise HTTPException(404, "Coordinatore non trovato")
-    return dict(row)
+def get_coordinatore(id: int, user: dict = Depends(get_current_user)):
+    return _pubblica(_scheda("coordinatori", id, user))
 
 
 @router.post("/coordinatori", status_code=201)
-def create_coordinatore(data: CoordinatoreIn, db: sqlite3.Connection = Depends(get_db)):
-    cur = db.execute("""
-        INSERT INTO coordinatori
-            (nome, cognome, codice_fiscale, ordine_professionale, numero_ordine,
-             provincia_ordine, titolo_studio, anni_esperienza, attestato_corso,
-             data_corso, data_aggiornamento, indirizzo, citta, cap, provincia,
-             telefono, email, pec)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """, (data.nome, data.cognome, data.codice_fiscale,
-          data.ordine_professionale, data.numero_ordine, data.provincia_ordine,
-          data.titolo_studio, data.anni_esperienza, data.attestato_corso,
-          data.data_corso, data.data_aggiornamento,
-          data.indirizzo, data.citta, data.cap, data.provincia,
-          data.telefono, data.email, data.pec))
-    db.commit()
-    return {"id": cur.lastrowid, "message": "Coordinatore creato"}
+def create_coordinatore(data: CoordinatoreIn, user: dict = Depends(get_current_user)):
+    nuovo = _crea("coordinatori", data, user)
+    # Il primo coordinatore dell'account diventa il predefinito
+    conn = get_conn()
+    try:
+        n = conn.execute("SELECT COUNT(*) FROM coordinatori WHERE username=?", (user["username"],)).fetchone()[0]
+        if n == 1:
+            conn.execute("UPDATE coordinatori SET predefinito=1 WHERE id=?", (nuovo,))
+            conn.commit()
+    finally:
+        conn.close()
+    return {"id": nuovo, "message": "Coordinatore creato"}
 
 
 @router.put("/coordinatori/{id}")
-def update_coordinatore(id: int, data: CoordinatoreIn, db: sqlite3.Connection = Depends(get_db)):
-    db.execute("""
-        UPDATE coordinatori SET
-            nome=?, cognome=?, codice_fiscale=?, ordine_professionale=?,
-            numero_ordine=?, provincia_ordine=?, titolo_studio=?, anni_esperienza=?,
-            attestato_corso=?, data_corso=?, data_aggiornamento=?,
-            indirizzo=?, citta=?, cap=?, provincia=?,
-            telefono=?, email=?, pec=?, updated_at=datetime('now')
-        WHERE id=?
-    """, (data.nome, data.cognome, data.codice_fiscale,
-          data.ordine_professionale, data.numero_ordine, data.provincia_ordine,
-          data.titolo_studio, data.anni_esperienza, data.attestato_corso,
-          data.data_corso, data.data_aggiornamento,
-          data.indirizzo, data.citta, data.cap, data.provincia,
-          data.telefono, data.email, data.pec, id))
-    db.commit()
+def update_coordinatore(id: int, data: CoordinatoreIn, user: dict = Depends(get_current_user)):
+    _aggiorna("coordinatori", id, data, user)
     return {"message": "Coordinatore aggiornato"}
 
 
 @router.delete("/coordinatori/{id}")
-def delete_coordinatore(id: int, db: sqlite3.Connection = Depends(get_db)):
-    db.execute("DELETE FROM coordinatori WHERE id=?", (id,))
-    db.commit()
+def delete_coordinatore(id: int, user: dict = Depends(get_current_user)):
+    _elimina("coordinatori", id, user)
     return {"message": "Coordinatore eliminato"}
+
+
+@router.post("/coordinatori/{id}/predefinito")
+def imposta_predefinito(id: int, user: dict = Depends(get_current_user)):
+    _scheda("coordinatori", id, user)
+    conn = get_conn()
+    try:
+        conn.execute("UPDATE coordinatori SET predefinito = (id = ?) WHERE username = ?", (id, user["username"]))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True}
+
+
+def salva_immagine(contenuto: bytes, cartella: str, prefisso: str, vecchio: Optional[str]) -> str:
+    """PNG con trasparenza conservata (firme scansionate su fondo bianco restano leggibili)."""
+    import io
+    from PIL import Image
+    if len(contenuto) > MAX_MB_IMMAGINE * 1024 * 1024:
+        raise HTTPException(400, f"Immagine troppo grande: il limite è {MAX_MB_IMMAGINE} MB")
+    try:
+        img = Image.open(io.BytesIO(contenuto))
+        img.load()
+    except Exception:
+        raise HTTPException(400, "File non riconosciuto: carica un'immagine PNG o JPG")
+    img = img.convert("RGBA")
+    img.thumbnail((1200, 1200))
+    path = os.path.join(cartella, f"{prefisso}_{uuid.uuid4().hex[:10]}.png")
+    img.save(path, format="PNG")
+    if vecchio and os.path.exists(vecchio):
+        os.remove(vecchio)
+    return path
+
+
+@router.post("/coordinatori/{id}/firma")
+async def carica_firma(id: int, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    r = _scheda("coordinatori", id, user)
+    path = salva_immagine(await file.read(), cartella_studio(user["username"]), f"firma_{id}", r.get("firma_path"))
+    conn = get_conn()
+    try:
+        conn.execute("UPDATE coordinatori SET firma_path=? WHERE id=?", (path, id))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True}
+
+
+@router.delete("/coordinatori/{id}/firma")
+def elimina_firma(id: int, user: dict = Depends(get_current_user)):
+    r = _scheda("coordinatori", id, user)
+    if r.get("firma_path") and os.path.exists(r["firma_path"]):
+        os.remove(r["firma_path"])
+    conn = get_conn()
+    try:
+        conn.execute("UPDATE coordinatori SET firma_path=NULL WHERE id=?", (id,))
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True}
+
+
+@router.get("/coordinatori/{id}/firma.png")
+def immagine_firma(id: int, request: Request, token: Optional[str] = None):
+    from routers.documents import _utente_da_richiesta
+    user = _utente_da_richiesta(request, token)
+    r = _scheda("coordinatori", id, user)
+    if not r.get("firma_path") or not os.path.exists(r["firma_path"]):
+        raise HTTPException(404, "Nessuna firma")
+    return FileResponse(r["firma_path"], media_type="image/png")

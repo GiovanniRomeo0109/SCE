@@ -47,7 +47,7 @@ export default function Dashboard() {
         </div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <Link to="/nuovo/notifica" className="btn btn-primary">📋 Notifica Preliminare</Link>
-          <Link to="/nuovo/psc"      className="btn btn-ghost">📗 Nuovo PSC</Link>
+          <Link to="/nuovo-progetto?tipo=psc" className="btn btn-ghost">📗 Nuovo PSC</Link>
           <Link to="/nuovo/pos"      className="btn btn-ghost">📘 Nuovo POS</Link>
         </div>
       </div>

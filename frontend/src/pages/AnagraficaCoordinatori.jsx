@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getCoordinatori, createCoordinatore, updateCoordinatore, deleteCoordinatore } from '../utils/api';
+import { getCoordinatori, createCoordinatore, updateCoordinatore, deleteCoordinatore, caricaFirma, eliminaFirma, firmaUrl, setPredefinito } from '../utils/api';
+import StudioCard from '../components/StudioCard';
 import { useNotify } from '../App';
 import Field from '../components/Field';
 
@@ -33,6 +34,20 @@ export default function AnagraficaCoordinatori() {
     } catch { notify('Errore durante il salvataggio', 'error'); }
   };
 
+  const [versioneFirma, setVersioneFirma] = useState(Date.now());
+  const firma = async (c, file) => {
+    if (!file) return;
+    const fd = new FormData(); fd.append('file', file);
+    try { await caricaFirma(c.id, fd); setVersioneFirma(Date.now()); notify('Firma caricata ✓', 'success'); carica(); }
+    catch (e) { notify(e.message, 'error'); }
+  };
+  const togliFirma = async (c) => {
+    try { await eliminaFirma(c.id); carica(); } catch (e) { notify(e.message, 'error'); }
+  };
+  const predefinito = async (c) => {
+    try { await setPredefinito(c.id); carica(); } catch (e) { notify(e.message, 'error'); }
+  };
+
   const elimina = async (id) => {
     if (!window.confirm('Eliminare questo coordinatore?')) return;
     try { await deleteCoordinatore(id); notify('Eliminato', 'success'); carica(); }
@@ -41,7 +56,8 @@ export default function AnagraficaCoordinatori() {
 
   return (
     <div>
-      <div className="page-header"><h1>📐 Coordinatori CSP / CSE</h1><p>Anagrafica coordinatori persistente</p></div>
+      <div className="page-header"><h1>📐 Coordinatori CSP / CSE</h1><p>Dati dello studio e dei coordinatori che firmano i PSC (visibili solo al tuo account)</p></div>
+      <StudioCard />
       <div className="toolbar">
         <span style={{ color: '#8A9BB0', fontSize: '0.85rem' }}>{list.length} coordinatori</span>
         <button className="btn btn-primary" onClick={() => apri()}>+ Nuovo Coordinatore</button>
@@ -93,17 +109,36 @@ export default function AnagraficaCoordinatori() {
         ) : (
           <div className="table-wrapper">
             <table>
-              <thead><tr><th>Nome Cognome</th><th>Ordine</th><th>N. Iscrizione</th><th>Aggiornamento</th><th>Contatti</th><th>Azioni</th></tr></thead>
+              <thead><tr><th>Nome Cognome</th><th>Ordine</th><th>N. Iscrizione</th><th>Aggiornamento</th><th>Contatti</th><th>Firma</th><th>Azioni</th></tr></thead>
               <tbody>
                 {list.map(c => (
                   <tr key={c.id}>
-                    <td><strong>{c.nome} {c.cognome}</strong></td>
+                    <td>
+                      <strong>{c.nome} {c.cognome}</strong>
+                      <div style={{ fontSize: '0.72rem' }}>
+                        {c.predefinito ? <span style={{ color: '#27AE60' }}>★ Predefinito per i PSC</span>
+                          : <button className="btn btn-ghost btn-sm" style={{ padding: '0 6px', fontSize: '0.7rem' }} onClick={() => predefinito(c)}>Rendi predefinito</button>}
+                      </div>
+                    </td>
                     <td style={{ fontSize: '0.82rem' }}>{c.ordine_professionale || '—'}</td>
                     <td style={{ fontSize: '0.82rem' }}>{c.numero_ordine || '—'}{c.provincia_ordine ? ` (${c.provincia_ordine})` : ''}</td>
                     <td style={{ fontSize: '0.82rem', color: c.data_aggiornamento ? '#27AE60' : '#C0392B' }}>
                       {c.data_aggiornamento ? new Date(c.data_aggiornamento).toLocaleDateString('it-IT') : 'Non indicata'}
                     </td>
                     <td style={{ fontSize: '0.82rem' }}>{c.email || c.telefono || '—'}</td>
+                    <td data-testid={`firma-${c.id}`}>
+                      {c.ha_firma ? (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <img src={firmaUrl(c.id, versioneFirma)} alt="Firma" style={{ maxHeight: 32, maxWidth: 90, border: '1px solid #EEF1F5' }} />
+                          <button className="btn btn-ghost btn-sm" title="Togli la firma" onClick={() => togliFirma(c)}>✕</button>
+                        </span>
+                      ) : (
+                        <label className="btn btn-ghost btn-sm" style={{ cursor: 'pointer', fontSize: '0.72rem' }}>
+                          Carica firma
+                          <input type="file" accept=".png,.jpg,.jpeg" style={{ display: 'none' }} onChange={e => { firma(c, e.target.files?.[0]); e.target.value = ''; }} />
+                        </label>
+                      )}
+                    </td>
                     <td style={{ display: 'flex', gap: 8 }}>
                       <button className="btn btn-ghost btn-sm" onClick={() => apri(c)}>✏️</button>
                       <button className="btn btn-danger btn-sm" onClick={() => elimina(c.id)}>🗑</button>

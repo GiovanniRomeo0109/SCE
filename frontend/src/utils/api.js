@@ -206,6 +206,24 @@ export function dxfUrl(id, sid) {
   return `${BASE_URL}${P(id)}/schemi/${sid}/export.dxf?token=${encodeURIComponent(getToken() || '')}`;
 }
 
+// ── Documento finale, studio, firme, esempio (blocco 6) ───────────────────────
+export const getStudio          = ()               => apiFetch('/api/studio');
+export const salvaStudio        = (dati)           => apiFetch('/api/studio', { method: 'PUT', body: JSON.stringify(dati) });
+export const caricaLogo         = (fd)             => apiFetch('/api/studio/logo', { method: 'POST', body: fd });
+export const eliminaLogo        = ()               => apiFetch('/api/studio/logo', { method: 'DELETE' });
+export const logoUrl            = (v)              => `${BASE_URL}/api/studio/logo.png?token=${encodeURIComponent(getToken() || '')}&v=${v || ''}`;
+export const caricaFirma        = (cid, fd)        => apiFetch(`/api/anagrafica/coordinatori/${cid}/firma`, { method: 'POST', body: fd });
+export const eliminaFirma       = (cid)            => apiFetch(`/api/anagrafica/coordinatori/${cid}/firma`, { method: 'DELETE' });
+export const firmaUrl           = (cid, v)         => `${BASE_URL}/api/anagrafica/coordinatori/${cid}/firma.png?token=${encodeURIComponent(getToken() || '')}&v=${v || ''}`;
+export const setPredefinito     = (cid)            => apiFetch(`/api/anagrafica/coordinatori/${cid}/predefinito`, { method: 'POST' });
+export const getChecklist       = (id)             => apiFetch(`/api/progetti/${id}/checklist`);
+export const salvaVoceChecklist = (id, voce, dati) => apiFetch(`/api/progetti/${id}/checklist/${voce}`, { method: 'PATCH', body: JSON.stringify(dati) });
+export const getExportInfo      = (id)             => apiFetch(`/api/progetti/${id}/export-info`);
+export const esportaPsc         = (id, dati)       => apiFetch(`/api/progetti/${id}/export-psc`, { method: 'POST', body: JSON.stringify(dati) });
+export const chiudiProgetto     = (id)             => apiFetch(`/api/progetti/${id}/chiudi`, { method: 'POST' });
+export const pubblicaEsempio    = (id)             => apiFetch(`/api/progetti/${id}/pubblica-esempio`, { method: 'POST' });
+export const tappeManuali       = (id)             => apiFetch(`/api/progetti/${id}/tappe/manuale`, { method: 'POST' });
+
 // ── Default export ────────────────────────────────────────────────────────────
 const api = {
   apiFetch, logout, getCurrentUser, getUsageStats, getBudget, downloadUrl, register,
@@ -229,5 +247,7 @@ const api = {
   getPresidi, salvaIndirizzo, cercaPresidi, aggiungiPresidio, modificaPresidio, eliminaPresidio,
   getSchemi, creaSchema, getSchema, salvaSchema, duplicaSchema, eliminaSchema, caricaSfondo,
   sfondoDaDocumento, togliSfondo, sfondoUrl, dxfUrl,
+  getStudio, salvaStudio, caricaLogo, eliminaLogo, logoUrl, caricaFirma, eliminaFirma, firmaUrl, setPredefinito,
+  getChecklist, salvaVoceChecklist, getExportInfo, esportaPsc, chiudiProgetto, pubblicaEsempio, tappeManuali,
 };
 export default api;

@@ -17,7 +17,7 @@ const TIPI = [
     ]
   },
   {
-    id: 'psc', path: '/nuovo/psc',
+    id: 'psc', path: '/nuovo-progetto?tipo=psc',
     icon: '📗', titolo: 'Piano di Sicurezza e Coordinamento', norma: 'Art. 100 — D.Lgs. 81/2008',
     desc: 'Progetto PSC: carica tutti i documenti del cantiere, elaborati in background',
     suggeriti: [

@@ -116,6 +116,9 @@ def _scheda_documento(d) -> dict:
 
 @router.get("")
 def elenco_progetti(user: dict = Depends(get_current_user)):
+    # Blocco 6: al primo accesso l'account riceve la sua copia del progetto di esempio
+    from services import esempio
+    esempio.distribuisci(user)
     conn = get_conn()
     try:
         rows = conn.execute(

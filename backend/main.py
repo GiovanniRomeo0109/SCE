@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 import os, pathlib
 
 from database import init_db
-from routers import agent, anagrafica, estrazione, verifica, documents, progetti, elenchi, tappe, costi, cantiere
+from routers import agent, anagrafica, estrazione, verifica, documents, progetti, elenchi, tappe, costi, cantiere, finale
 from routers.auth_router import router as auth_router
 from usage_limit import require_credits
 
@@ -26,6 +26,34 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── Progetti chiusi: sola lettura ─────────────────────────────────────────────
+# Un unico controllo per tutti i router: su un progetto chiuso sono ammesse solo le letture,
+# l'export del PSC e l'eliminazione del progetto.
+import re as _re
+from fastapi import Request as _Request
+from fastapi.responses import JSONResponse as _JSONResponse
+
+_RE_PROGETTO = _re.compile(r"^/api/progetti/(\d+)/(.+)$")
+_AMMESSI_CHIUSO = ("export-psc",)
+
+
+@app.middleware("http")
+async def sola_lettura_progetti_chiusi(request: _Request, call_next):
+    if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        m = _RE_PROGETTO.match(request.url.path)
+        if m and m.group(2) not in _AMMESSI_CHIUSO:
+            from database import get_conn
+            conn = get_conn()
+            try:
+                r = conn.execute("SELECT stato FROM progetti WHERE id = ?", (int(m.group(1)),)).fetchone()
+            finally:
+                conn.close()
+            if r and r["stato"] == "chiuso":
+                return _JSONResponse({"detail": "Il progetto è chiuso: è in sola lettura. Puoi ancora scaricare il PSC."},
+                                     status_code=409)
+    return await call_next(request)
+
 
 # ── Startup ───────────────────────────────────────────────────────────────────
 @app.on_event("startup")
@@ -55,6 +83,8 @@ app.include_router(progetti.router,   prefix="/api/progetti",   tags=["Progetti 
 app.include_router(tappe.router,      prefix="/api/progetti",   tags=["Tappe PSC"])
 app.include_router(costi.router,      prefix="/api/progetti",   tags=["Costi e tempi"])
 app.include_router(cantiere.router,   prefix="/api/progetti",   tags=["Emergenze e schemi"])
+app.include_router(finale.router,     prefix="/api/progetti",   tags=["Documento finale"])
+app.include_router(finale.router_studio, prefix="/api/studio",  tags=["Studio"])
 app.include_router(elenchi.router,    prefix="/api/elenchi",    tags=["Elenchi prezzi"])
 
 # ── Serve React build (solo in produzione) ────────────────────────────────────
