@@ -80,7 +80,10 @@ TAPPE = [
             "Proponi il cronoprogramma in SETTIMANE (metodologia, punto 15): durata delle fasi e "
             "sottofasi, sequenza, lavorazioni contemporanee. Se nei documenti c'è già un "
             "cronoprogramma, usalo; altrimenti stimalo da lavorazioni e quantità. La settimana 1 "
-            "coincide con la data di inizio lavori indicata dal CSP (se assente: DA VERIFICARE). "
+            "coincide con la data di inizio lavori indicata dal CSP. Se la data non è indicata, "
+            "ragiona in giorni di cantiere: il 1° giorno è un lunedì, la settimana 1 va dal 1° al 7° giorno "
+            "(lavorativi dal 1° al 5°, non lavorativi il 6° e il 7°), la settimana 2 dall'8° al 14° e così via; "
+            "non considerare le festività. "
             "Per ogni riga stima gli ADDETTI MEDI presenti contemporaneamente in cantiere per quella "
             "fase (numero intero): servono a calcolare gli uomini-giorno (settimane × 5 giorni × addetti). "
             "Usa solo numeri nelle colonne Settimana inizio, Durata, Settimana fine e Addetti medi."),
@@ -123,7 +126,7 @@ TAPPE = [
         ],
     },
     {
-        "numero": 8, "codice": "eliminare", "titolo": "COME posso eliminarle o ridurle?",
+        "numero": 8, "codice": "eliminare", "titolo": "COME posso eliminare o ridurre le interferenze?",
         "obiettivo": (
             "Per ogni interferenza della tappa 7 proponi la soluzione (metodologia, punto 9): prima "
             "eliminarla (sfasamento temporale o spaziale), poi ridurla con procedure, protezioni "
@@ -196,6 +199,33 @@ TAPPE = [
         ],
     },
 ]
+
+# ── Riferimenti alla metodologia: solo per l'AI, non mostrati al CSP ─────────────
+# Dalle descrizioni visibili si tolgono i rimandi "(metodologia, punti ...)"; i riferimenti
+# normativi (es. Allegato XV) restano. I punti restano nel prompt, in "punti_metodologia".
+import re as _re
+
+_RE_METODO = _re.compile(r"\s*\(metodologia, punt[oi] ([^;)]+?)(?:;\s*([^)]+))?\)")
+_RE_COSTI = _re.compile(r"\s*\(sezione COSTI della\s+metodologia\)")
+
+
+def _separa_riferimenti(t):
+    punti = []
+
+    def sostituisci(m):
+        elenco = m.group(1).strip()
+        punti.append(("punti " if ("," in elenco or " e " in elenco) else "punto ") + elenco)
+        return f" ({m.group(2).strip()})" if m.group(2) else ""
+    testo = _RE_METODO.sub(sostituisci, t["obiettivo"])
+    if _RE_COSTI.search(testo):
+        punti.append("sezione COSTI DELLA SICUREZZA")
+        testo = _RE_COSTI.sub("", testo)
+    t["obiettivo"] = _re.sub(r"\s+([.,:;])", r"\1", _re.sub(r"\s{2,}", " ", testo)).strip()
+    t["punti_metodologia"] = "; ".join(punti)
+
+
+for _t in TAPPE:
+    _separa_riferimenti(_t)
 
 TAPPE_PER_NUMERO = {t["numero"]: t for t in TAPPE}
 NUMERO_TAPPE = len(TAPPE)

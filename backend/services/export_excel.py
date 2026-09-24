@@ -87,8 +87,9 @@ def cronoprogramma_xlsx(nome_progetto: str, ug: dict) -> bytes:
     _cella(ws, "E3", "Le celle gialle con testo blu sono modificabili: date, durate e uomini-giorno si ricalcolano.",
            Font(name=FONT, size=9, italic=True, color="5A6B7D"), bordo=False)
     if not d0:
-        _cella(ws, "E4", "Data di inizio non indicata nel progetto: inseriscila in C3 per calcolare le date.",
-               Font(name=FONT, size=9, italic=True, color="C0392B"), bordo=False)
+        _cella(ws, "E4", "Data non indicata: il cronoprogramma usa i giorni di cantiere (1° giorno = lunedì, "
+                         "settimana di 5 giorni lavorativi). Inserendo la data in C3 compaiono le date reali.",
+               Font(name=FONT, size=9, italic=True, color="5A6B7D"), bordo=False)
 
     fisse = ["Cod.", "Fase / lavorazione", "Impresa", "Addetti medi", "Sett. inizio", "Durata (sett.)",
              "Sett. fine", "Dal", "Al", "Uomini-giorno", "Contemporanea a"]
@@ -103,7 +104,8 @@ def cronoprogramma_xlsx(nome_progetto: str, ug: dict) -> bytes:
         col = L(c0 + k)
         _cella(ws, f"{col}{R0}", k + 1, BIANCO, F_INTEST, "0", CENTRO)
         # riga sopra l'intestazione: lunedì della settimana
-        _cella(ws, f"{col}{R0 - 1}", f'=IF($C$3="","",$C$3-WEEKDAY($C$3,2)+1+({col}{R0}-1)*7)',
+        # con la data: lunedì della settimana; senza data: giorno di cantiere con cui inizia la settimana
+        _cella(ws, f"{col}{R0 - 1}", f'=IF($C$3="",(({col}{R0}-1)*7+1)&"° g.",$C$3-WEEKDAY($C$3,2)+1+({col}{R0}-1)*7)',
                Font(name=FONT, size=7, color="5A6B7D"), fmt="dd/mm", align=Alignment(text_rotation=90, horizontal="center"))
         ws.column_dimensions[col].width = 3.2
     ws.row_dimensions[R0 - 1].height = 38
@@ -117,8 +119,12 @@ def cronoprogramma_xlsx(nome_progetto: str, ug: dict) -> bytes:
         _cella(ws, f"E{r}", riga["inizio"], BLU, F_INPUT, "0")
         _cella(ws, f"F{r}", riga["durata"], BLU, F_INPUT, "0.0")
         _cella(ws, f"G{r}", f'=IF(AND(ISNUMBER(E{r}),ISNUMBER(F{r})),E{r}+ROUNDUP(F{r},0)-1,"")', NERO, fmt="0")
-        _cella(ws, f"H{r}", f'=IF(OR($C$3="",NOT(ISNUMBER(E{r}))),"",$C$3-WEEKDAY($C$3,2)+1+(E{r}-1)*7)', NERO, fmt=DATA)
-        _cella(ws, f"I{r}", f'=IF(OR(H{r}="",NOT(ISNUMBER(G{r}))),"",$C$3-WEEKDAY($C$3,2)+1+(G{r}-1)*7+$C$4-1)', NERO, fmt=DATA)
+        # Senza data di inizio: giorni di cantiere (1° giorno = lunedì; settimana n = giorni da (n-1)×7+1 a n×7,
+        # lavorativi i primi "giorni/settimana"; festività non considerate)
+        _cella(ws, f"H{r}", f'=IF(NOT(ISNUMBER(E{r})),"",IF($C$3="",((E{r}-1)*7+1)&"° giorno",'
+                             f'$C$3-WEEKDAY($C$3,2)+1+(E{r}-1)*7))', NERO, fmt=DATA)
+        _cella(ws, f"I{r}", f'=IF(NOT(ISNUMBER(G{r})),"",IF($C$3="",((G{r}-1)*7+$C$4)&"° giorno",'
+                             f'$C$3-WEEKDAY($C$3,2)+1+(G{r}-1)*7+$C$4-1))', NERO, fmt=DATA)
         _cella(ws, f"J{r}", f'=IF(AND(ISNUMBER(D{r}),ISNUMBER(F{r})),F{r}*$C$4*D{r},"")', NERO, fmt="#,##0.0")
         _cella(ws, f"K{r}", riga["contemporanea"], NERO, align=A_CAPO)
         for k in range(max_sett):

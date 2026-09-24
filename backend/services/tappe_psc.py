@@ -389,10 +389,15 @@ def _tappe_precedenti_testo(tappe: list, numero: int) -> str:
 
 def costruisci_richiesta(progetto: dict, numero: int, tappe: list, fascicolo: dict, nota: str = None) -> dict:
     d = td.definizione(numero)
-    data_inizio = progetto.get("data_inizio_lavori") or "DA VERIFICARE (non indicata dal CSP)"
+    data_inizio = progetto.get("data_inizio_lavori") or (
+        "non indicata dal CSP: usa i giorni di cantiere (1° giorno = lunedì; settimana 1 = dal 1° al 7° giorno, "
+        "lavorativi dal 1° al 5°; settimana 2 = dall'8° al 14° giorno; festività non considerate). "
+        "Non scrivere DA VERIFICARE per la data di inizio")
     istruzioni = (
         f"TAPPA {numero} di {td.NUMERO_TAPPE}: {d['titolo']}\n\n"
-        f"OBIETTIVO\n{d['obiettivo']}\n\n"
+        f"OBIETTIVO\n{d['obiettivo']}\n"
+        + (f"Riferimenti nella METODOLOGIA PSC: {d['punti_metodologia']}.\n" if d.get("punti_metodologia") else "")
+        + "\n"
         + (f"NOTA DEL CSP PER QUESTA GENERAZIONE (seguila con priorità):\n{nota}\n\n" if nota else "")
         + "STRUTTURA DA RESTITUIRE (sostituisci i \"...\" con i contenuti; aggiungi tutte le righe "
           "necessarie alle tabelle; lascia le liste vuote se non servono):\n"

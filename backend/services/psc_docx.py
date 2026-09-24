@@ -113,7 +113,8 @@ def costruisci_piano(progetto_id: int, username: str, coordinatore: dict, studio
     dati_ec = [["Importo dei lavori", _euro(importo) if importo else DAV],
                ["Costi della sicurezza (stima analitica, cap. 11)", _euro(cs.totali(cs.righe(progetto_id))["totale"])],
                ["Durata presunta", f"{_num(durata, 0)} settimane" if durata else DAV],
-               ["Data di inizio lavori", date.fromisoformat(p["data_inizio_lavori"]).strftime("%d/%m/%Y") if p.get("data_inizio_lavori") else DAV],
+               ["Data di inizio lavori", date.fromisoformat(p["data_inizio_lavori"]).strftime("%d/%m/%Y") if p.get("data_inizio_lavori")
+                else "Non indicata: il cronoprogramma è espresso in giorni di cantiere (1° giorno = lunedì, settimana di 5 giorni lavorativi)"],
                ["Entità presunta del cantiere", f"{_num(ug['valore'], 1)} uomini-giorno" if ug.get("valore") else DAV]]
     piano[2] = (testo(1, "descrizione") + tabella(1, "dati_opera")
                 + [("tabella", "Dati economici e temporali", ["Dato", "Valore"], dati_ec)]

@@ -174,7 +174,7 @@ export default function TappaEditor({ progettoId, tappa, tappe, dataInizio, occu
           <label htmlFor="data-inizio"><strong>Data di inizio lavori</strong> (settimana 1 del cronoprogramma):</label>
           <input id="data-inizio" type="date" className="form-control" style={{ maxWidth: 180 }}
             value={data} onChange={e => salvaData(e.target.value)} disabled={bloccata} />
-          {!data && <span style={{ color: '#C88B2A' }}>non indicata: il cronoprogramma userà "DA VERIFICARE"</span>}
+          {!data && <span style={{ color: '#5A6B7D' }} data-testid="nota-giorni-cantiere">Data non indicata: il cronoprogramma usa i giorni di cantiere (1° giorno = lunedì, settimana di 5 giorni lavorativi)</span>}
         </div>
       )}
 
