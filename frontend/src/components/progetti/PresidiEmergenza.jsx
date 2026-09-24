@@ -20,7 +20,7 @@ function Campo({ valore, onSalva, larghezza, placeholder }) {
   );
 }
 
-export default function PresidiEmergenza({ progettoId, onAggiorna, onApriSchema }) {
+export default function PresidiEmergenza({ progettoId, onAggiorna, onApriSchema, manuale }) {
   const notify = useNotify();
   const notifyRef = useRef(notify);
   notifyRef.current = notify;
@@ -94,16 +94,18 @@ export default function PresidiEmergenza({ progettoId, onAggiorna, onApriSchema 
 
       <div style={{ fontWeight: 700, color: '#1A3A5C' }}>🚑 Presidi di emergenza</div>
       <div style={{ fontSize: '0.75rem', color: '#8A9BB0', marginBottom: 10 }}>
-        Ricerca sul web a partire dall'indirizzo del cantiere. Distanze e percorsi sono indicativi (nessun servizio di mappe):
-        ogni presidio resta "da verificare" finché non premi "Confermato". I presidi compilano la tabella qui sopra.
+        {manuale ? 'Progetto manuale: inserisci a mano i presidi di emergenza; compilano la tabella qui sopra.'
+          : 'Ricerca sul web a partire dall\'indirizzo del cantiere. Distanze e percorsi sono indicativi (nessun servizio di mappe): ogni presidio resta "da verificare" finché non premi "Confermato". I presidi compilano la tabella qui sopra.'}
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
         <label htmlFor="indirizzo-cantiere" style={{ fontSize: '0.82rem', fontWeight: 600 }}>Indirizzo del cantiere</label>
         <input id="indirizzo-cantiere" className="form-control" style={{ flex: 1, minWidth: 260 }} value={indirizzo}
           placeholder="Via, numero civico, comune (provincia)" onChange={e => setIndirizzo(e.target.value)} onBlur={salvaInd} />
-        <button className="btn btn-gold btn-sm" onClick={cerca} disabled={cercando}>
-          {cercando ? '⏳ Ricerca in corso…' : '🔎 Cerca presidi di emergenza'}
-        </button>
+        {!manuale && (
+          <button className="btn btn-gold btn-sm" onClick={cerca} disabled={cercando}>
+            {cercando ? '⏳ Ricerca in corso…' : '🔎 Cerca presidi di emergenza'}
+          </button>
+        )}
       </div>
       {!d.indirizzo_cantiere && d.indirizzo_proposto && (
         <div style={{ fontSize: '0.72rem', color: '#5A6B7D', marginTop: -6, marginBottom: 10 }}>Indirizzo proposto dai documenti del progetto: controllalo.</div>

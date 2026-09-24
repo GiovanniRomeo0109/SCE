@@ -16,7 +16,7 @@ function statoTappa(t) {
   return { testo: 'Da generare', colore: '#8A9BB0', icona: '○' };
 }
 
-export default function TappePSC({ progettoId, onApriSchema, solaLettura }) {
+export default function TappePSC({ progettoId, onApriSchema, solaLettura, manuale }) {
   const notify = useNotify();
   const notifyRef = useRef(notify);
   notifyRef.current = notify;
@@ -97,15 +97,16 @@ export default function TappePSC({ progettoId, onApriSchema, solaLettura }) {
             <div style={{ width: `${(generate / 12) * 100}%`, height: '100%', background: '#27AE60', transition: 'width .4s' }} />
           </div>
           <div style={{ fontSize: '0.75rem', color: '#8A9BB0' }}>
-            {inCorso ? (inGenerazione ? `In generazione: tappa ${inGenerazione.numero} — ${inGenerazione.titolo}` : 'In coda…')
-              : !docPronti ? (documenti.in_lavorazione ? 'Attendi la fine dell\'elaborazione dei documenti' : 'Carica almeno un documento nella scheda Documenti')
-              : attenzione ? `${attenzione} tappe da ricontrollare o aggiornare` : 'Puoi generare le tappe una alla volta o tutte insieme'}
+            {manuale && !inCorso ? 'Progetto manuale: compila ogni tappa a mano e salva' : inCorso ? (inGenerazione ? `In generazione: tappa ${inGenerazione.numero} — ${inGenerazione.titolo}` : 'In coda…')
+              : !docPronti && !manuale ? (documenti.in_lavorazione ? 'Attendi la fine dell\'elaborazione dei documenti' : 'Carica almeno un documento nella scheda Documenti')
+              : attenzione ? `${attenzione} tappe da ricontrollare o aggiornare`
+              : manuale ? 'Progetto manuale: compila ogni tappa a mano e salva' : 'Puoi generare le tappe una alla volta o tutte insieme'}
           </div>
         </div>
-        {!inCorso && !solaLettura && !documenti.completati && !documenti.in_lavorazione && generate < 12 && (
+        {!manuale && !inCorso && !solaLettura && !documenti.completati && !documenti.in_lavorazione && generate < 12 && (
           <button className="btn btn-ghost" onClick={compilaAMano} data-testid="compila-senza-documenti">✍️ Compila senza documenti</button>
         )}
-        {solaLettura ? null : inCorso ? (
+        {solaLettura || manuale ? null : inCorso ? (
           <button className="btn btn-ghost" onClick={interrompi}>⏹ Interrompi</button>
         ) : (
           <button className="btn btn-gold" onClick={bozza} disabled={!docPronti || avvio}>
@@ -147,7 +148,7 @@ export default function TappePSC({ progettoId, onApriSchema, solaLettura }) {
         {/* Editor */}
         <TappaEditor progettoId={progettoId} tappa={tappa} tappe={tappe}
           dataInizio={dati.data_inizio_lavori} occupato={!!solaLettura}
-          onAggiorna={carica} onModificata={onModificata} onApriSchema={onApriSchema} />
+          onAggiorna={carica} onModificata={onModificata} onApriSchema={onApriSchema} manuale={manuale} />
       </div>
     </div>
   );

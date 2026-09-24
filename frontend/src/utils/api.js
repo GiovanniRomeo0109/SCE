@@ -137,8 +137,8 @@ export const generaContenutoAI  = (data) => apiFetch('/api/agent/genera-contenut
 export const estraiDati         = (formData) => apiFetch('/api/estrazione/estrai',   { method: 'POST', body: formData });
 
 // ── Progetti PSC (blocco 2) ───────────────────────────────────────────────────
-export const getProgetti        = ()               => apiFetch('/api/progetti');
-export const creaProgetto       = (nome)           => apiFetch('/api/progetti', { method: 'POST', body: JSON.stringify({ nome }) });
+export const getProgetti        = (modalita)       => apiFetch(`/api/progetti${modalita ? `?modalita=${modalita}` : ''}`);
+export const creaProgetto       = (nome, modalita) => apiFetch('/api/progetti', { method: 'POST', body: JSON.stringify({ nome, modalita: modalita || 'ai' }) });
 export const getProgetto        = (id)             => apiFetch(`/api/progetti/${id}`);
 export const rinominaProgetto   = (id, nome)       => apiFetch(`/api/progetti/${id}`, { method: 'PATCH', body: JSON.stringify({ nome }) });
 export const eliminaProgetto    = (id)             => apiFetch(`/api/progetti/${id}`, { method: 'DELETE' });

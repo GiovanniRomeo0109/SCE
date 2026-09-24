@@ -9,7 +9,8 @@ import ProgettoDettaglio from './ProgettoDettaglio';
  * L'id del progetto aperto è nell'indirizzo (?progetto=ID): ricaricando la pagina
  * si torna allo stesso progetto.
  */
-export default function ProgettiPSC({ onIndietro }) {
+export default function ProgettiPSC({ onIndietro, modalita = 'ai' }) {
+  const manuale = modalita === 'manuale';
   const notify = useNotify();
   const notifyRef = useRef(notify);
   notifyRef.current = notify;
@@ -20,21 +21,23 @@ export default function ProgettiPSC({ onIndietro }) {
   const [creazione, setCreazione] = useState(false);
 
   const carica = useCallback(() => {
-    getProgetti()
+    getProgetti(modalita)
       .then(r => setProgetti(Array.isArray(r.data) ? r.data : []))
       .catch(e => { setProgetti([]); notifyRef.current(e.message, 'error'); });
-  }, []);
+  }, [modalita]);
 
   useEffect(() => { if (!aperto) carica(); }, [aperto, carica]);
 
-  const apri = (id) => setParams({ tipo: 'psc', progetto: String(id) });
-  const chiudi = () => setParams({ tipo: 'psc' });
+  // Nel flusso con AI l'indirizzo contiene ?tipo=psc; la pagina manuale ne ha uno proprio
+  const base = manuale ? {} : { tipo: 'psc' };
+  const apri = (id) => setParams({ ...base, progetto: String(id) });
+  const chiudi = () => setParams(base);
 
   const crea = async () => {
     if (!nome.trim()) { notify('Indica un nome per il progetto', 'error'); return; }
     setCreazione(true);
     try {
-      const r = await creaProgetto(nome.trim());
+      const r = await creaProgetto(nome.trim(), modalita);
       setNome('');
       apri(r.data.id);
     } catch (e) { notify(e.message, 'error'); }
@@ -53,7 +56,7 @@ export default function ProgettiPSC({ onIndietro }) {
     <div style={{ maxWidth: 900 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
         <button className="btn btn-ghost btn-sm" onClick={onIndietro}>← Tipo documento</button>
-        <h2 style={{ margin: 0, color: '#1A3A5C' }}>📗 I tuoi progetti PSC</h2>
+        <h2 style={{ margin: 0, color: '#1A3A5C' }}>📗 {manuale ? 'I tuoi progetti PSC manuali' : 'I tuoi progetti PSC'}</h2>
       </div>
 
       <div className="card" style={{ marginBottom: 20 }}>
@@ -66,8 +69,8 @@ export default function ProgettiPSC({ onIndietro }) {
           </button>
         </div>
         <p style={{ fontSize: '0.78rem', color: '#8A9BB0', margin: '8px 0 0' }}>
-          Dopo la creazione potrai caricare tutti i documenti del cantiere: vengono elaborati in
-          background e puoi chiudere la pagina e tornare più tardi.
+          {manuale ? 'Il progetto nasce con le 12 tappe già pronte e vuote: le compili tu, sezione per sezione, senza AI.'
+            : 'Dopo la creazione potrai caricare tutti i documenti del cantiere: vengono elaborati in background e puoi chiudere la pagina e tornare più tardi.'}
         </p>
       </div>
 

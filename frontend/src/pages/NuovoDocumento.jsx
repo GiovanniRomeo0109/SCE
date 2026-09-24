@@ -7,7 +7,7 @@ const tipi = [
     desc: 'Da inviare ad ASL e ITL prima dell\'inizio lavori.',
   },
   {
-    path: '/nuovo-progetto?tipo=psc', icon: '📗',
+    path: '/nuovo-manuale-psc', icon: '📗',
     titolo: 'Piano di Sicurezza e Coordinamento', norma: 'Art. 100 — D.Lgs. 81/2008',
     desc: 'Obbligatorio quando operano più imprese in cantiere.',
   },

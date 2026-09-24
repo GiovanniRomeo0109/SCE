@@ -256,6 +256,24 @@ def _interrompi_catena(progetto_id: int, da_numero: int, messaggio: str):
     _aggiorna_progetto(progetto_id, bozza_stato="interrotta", bozza_messaggio=messaggio)
 
 
+def crea_tappe_vuote(progetto_id: int) -> list:
+    """Tappe non ancora presenti → strutture vuote da compilare a mano (nessuna AI)."""
+    create = []
+    for t in leggi_tappe(progetto_id):
+        if t["contenuto_json"] or t["stato"] in STATI_ATTIVI:
+            continue
+        vuoto = td.normalizza(t["numero"], {})
+        _aggiorna(progetto_id, t["numero"], contenuto_json=json.dumps(vuoto, ensure_ascii=False),
+                  stato="generata", modificata_a_mano=1, errore=None)
+        create.append(t["numero"])
+    return create
+
+
+def e_manuale(progetto_id: int) -> bool:
+    p = _progetto(progetto_id)
+    return bool(p and (p.get("modalita") or "ai") == "manuale")
+
+
 def salva_modifica_csp(progetto_id: int, numero: int, dati: dict) -> dict:
     nuovo = td.normalizza(numero, dati)
     _aggiorna(progetto_id, numero, contenuto_json=json.dumps(nuovo, ensure_ascii=False),
@@ -263,6 +281,9 @@ def salva_modifica_csp(progetto_id: int, numero: int, dati: dict) -> dict:
     if numero == 11:
         from services import costi_sicurezza
         costi_sicurezza.sincronizza(progetto_id)
+    if e_manuale(progetto_id):
+        # Progetto manuale: tutte le tappe sono scritte dal CSP, nessuna cascata né segnalazione
+        return {"rigenerate": [], "da_ricontrollare": []}
     return cascata(progetto_id, numero)
 
 

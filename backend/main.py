@@ -36,6 +36,8 @@ from fastapi.responses import JSONResponse as _JSONResponse
 
 _RE_PROGETTO = _re.compile(r"^/api/progetti/(\d+)/(.+)$")
 _AMMESSI_CHIUSO = ("export-psc",)
+# Progetti manuali: niente documenti per l'AI, niente generazione delle tappe, niente ricerca web dei presidi
+_VIETATI_MANUALE = _re.compile(r"^(documenti|documenti/\d+/rielabora|tappe/bozza|tappe/\d+/genera|presidi/cerca)$")
 
 
 @app.middleware("http")
@@ -46,11 +48,14 @@ async def sola_lettura_progetti_chiusi(request: _Request, call_next):
             from database import get_conn
             conn = get_conn()
             try:
-                r = conn.execute("SELECT stato FROM progetti WHERE id = ?", (int(m.group(1)),)).fetchone()
+                r = conn.execute("SELECT stato, modalita FROM progetti WHERE id = ?", (int(m.group(1)),)).fetchone()
             finally:
                 conn.close()
             if r and r["stato"] == "chiuso":
                 return _JSONResponse({"detail": "Il progetto è chiuso: è in sola lettura. Puoi ancora scaricare il PSC."},
+                                     status_code=409)
+            if r and r["modalita"] == "manuale" and request.method == "POST" and _VIETATI_MANUALE.match(m.group(2)):
+                return _JSONResponse({"detail": "Funzione non disponibile nei progetti manuali: le tappe si compilano a mano."},
                                      status_code=409)
     return await call_next(request)
 

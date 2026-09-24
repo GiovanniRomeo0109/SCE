@@ -241,14 +241,6 @@ def pubblica_esempio(progetto_id: int, user: dict = Depends(get_current_user)):
 @router.post("/{progetto_id}/tappe/manuale")
 def tappe_manuali(progetto_id: int, user: dict = Depends(get_current_user)):
     """Compila senza documenti: crea le tappe non ancora presenti come strutture vuote, senza AI."""
-    import json
     _verifica(progetto_id, user)
-    create = []
-    for t in tappe_psc.leggi_tappe(progetto_id):
-        if t["contenuto_json"] or t["stato"] in tappe_psc.STATI_ATTIVI:
-            continue
-        vuoto = td.normalizza(t["numero"], {})
-        tappe_psc._aggiorna(progetto_id, t["numero"], contenuto_json=json.dumps(vuoto, ensure_ascii=False),
-                            stato="generata", modificata_a_mano=1, errore=None)
-        create.append(t["numero"])
+    create = tappe_psc.crea_tappe_vuote(progetto_id)
     return {"create": create}

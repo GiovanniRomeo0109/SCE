@@ -397,6 +397,7 @@ def _migra_blocco_6(c):
     _aggiungi_colonna(c, "documenti", "revisione", "INTEGER")
     _aggiungi_colonna(c, "progetti", "coordinatore_id", "INTEGER")
     _aggiungi_colonna(c, "progetti", "esempio_sorgente", "INTEGER")   # copia: id del progetto di esempio originale
+    _aggiungi_colonna(c, "progetti", "modalita", "TEXT DEFAULT 'ai'")  # ai | manuale (progetti manuali: senza documenti né generazione AI)
     c.execute("""
         CREATE TABLE IF NOT EXISTS esempio_pubblicato (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,

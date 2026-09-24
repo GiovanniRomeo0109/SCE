@@ -24,7 +24,7 @@ function Area({ value, onChange, minRows = 2, stile = {}, disabled }) {
   );
 }
 
-export default function TappaEditor({ progettoId, tappa, tappe, dataInizio, occupato, onAggiorna, onModificata, onApriSchema }) {
+export default function TappaEditor({ progettoId, tappa, tappe, dataInizio, occupato, onAggiorna, onModificata, onApriSchema, manuale }) {
   const notify = useNotify();
   const [sezioni, setSezioni] = useState([]);
   const [modificata, setModificata] = useState(false);
@@ -135,7 +135,7 @@ export default function TappaEditor({ progettoId, tappa, tappe, dataInizio, occu
           {tappa.da_ricontrollare && (
             <button className="btn btn-gold btn-sm" onClick={verificata} disabled={bloccata}>✔ Segna come verificata</button>
           )}
-          {!attiva && (
+          {!attiva && !manuale && (
             <button className="btn btn-ghost btn-sm" onClick={() => setMostraNota(v => !v)} disabled={bloccata || attesa}>
               {tappa.contenuto ? '↻ Rigenera…' : '✨ Genera…'}
             </button>
@@ -246,7 +246,7 @@ export default function TappaEditor({ progettoId, tappa, tappe, dataInizio, occu
         <UominiGiorno progettoId={progettoId} versione={`${tappa.generata_at}|${contenutoServer.length}|${dataInizio}`} />
       )}
       {tappa.contenuto && !attiva && tappa.numero === 9 && (
-        <PresidiEmergenza progettoId={progettoId} onAggiorna={onAggiorna} onApriSchema={onApriSchema} />
+        <PresidiEmergenza progettoId={progettoId} onAggiorna={onAggiorna} onApriSchema={onApriSchema} manuale={manuale} />
       )}
       {tappa.contenuto && !attiva && tappa.numero === 11 && (
         <StimaCosti progettoId={progettoId} versione={`${tappa.generata_at}|${contenutoServer.length}`} />
@@ -269,7 +269,7 @@ export default function TappaEditor({ progettoId, tappa, tappe, dataInizio, occu
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10,
           borderTop: '1px solid #EEF1F5', paddingTop: 12 }}>
           <div style={{ fontSize: '0.75rem', color: '#8A9BB0' }}>
-            {tappa.modificata_a_mano ? '✔ Modificata da te · ' : '🤖 Generata dall\'AI · '}
+            {manuale ? '✍️ Compilata a mano · ' : tappa.modificata_a_mano ? '✔ Modificata da te · ' : '🤖 Generata dall\'AI · '}
             {nDav > 0 ? `${nDav} dati DA VERIFICARE` : 'nessun dato da verificare'}
             {modificata && <strong style={{ color: '#C88B2A' }}> · modifiche non salvate</strong>}
           </div>

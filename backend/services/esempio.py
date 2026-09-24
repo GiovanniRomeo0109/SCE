@@ -15,7 +15,7 @@ from database import get_conn, cartella_schemi
 log = logging.getLogger("esempio")
 
 CAMPI_PROGETTO = ("data_inizio_lavori", "importo_lavori", "incidenza_manodopera", "costo_giornaliero",
-                  "ug_scelta", "indirizzo_cantiere", "bozza_stato")
+                  "ug_scelta", "indirizzo_cantiere", "bozza_stato", "modalita")
 
 
 def pubblicato():

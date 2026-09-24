@@ -52,6 +52,9 @@ export default function ProgettoDettaglio({ progettoId, onIndietro }) {
   }, [progettoId]);
 
   useEffect(() => { carica(); }, [carica]);
+  // Nei progetti manuali non c'è la scheda Documenti: si parte dalle tappe
+  const modalita = p?.modalita;
+  useEffect(() => { if (modalita === 'manuale') setVista(v => (v === 'documenti' || v === 'questionario' ? 'tappe' : v)); }, [modalita]);
 
   // Aggiornamento automatico finché ci sono documenti in lavorazione
   useEffect(() => {
@@ -136,6 +139,7 @@ export default function ProgettoDettaglio({ progettoId, onIndietro }) {
   if (!p) return <div style={{ padding: 40, color: '#8A9BB0' }}>Caricamento progetto…</div>;
 
   const chiuso = p.stato === 'chiuso';
+  const manuale = p.modalita === 'manuale';
   const spazioUsato = p.documenti.filter(d => d.file_disponibile).reduce((s, d) => s + d.dimensione, 0);
 
   return (
@@ -178,7 +182,9 @@ export default function ProgettoDettaglio({ progettoId, onIndietro }) {
 
       {/* Schede */}
       <div style={{ display: 'flex', gap: 4, borderBottom: '2px solid #EEF1F5', margin: '4px 0 18px' }}>
-        {[['documenti', `📄 Documenti (${p.documenti.length})`], ['tappe', '🧭 Tappe PSC'], ['questionario', '📝 Questionario sopralluogo'], ['schema', '🗺️ Schema di cantiere'], ['finale', '📄 Documento finale']].map(([k, label]) => (
+        {[['documenti', `📄 Documenti (${p.documenti.length})`], ['tappe', '🧭 Tappe PSC'], ['questionario', '📝 Questionario sopralluogo'], ['schema', '🗺️ Schema di cantiere'], ['finale', '📄 Documento finale']]
+          // Progetto manuale: niente documenti per l'AI e niente questionario (lo genera l'AI)
+          .filter(([k]) => !(manuale && (k === 'documenti' || k === 'questionario'))).map(([k, label]) => (
           <button key={k} onClick={() => setVista(k)} data-testid={`scheda-${k}`}
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 14px', fontSize: '0.88rem',
               fontWeight: vista === k ? 700 : 500, color: vista === k ? '#1A3A5C' : '#8A9BB0',
@@ -188,7 +194,7 @@ export default function ProgettoDettaglio({ progettoId, onIndietro }) {
         ))}
       </div>
 
-      {vista === 'tappe' && <TappePSC progettoId={progettoId} onApriSchema={() => setVista('schema')} solaLettura={chiuso} />}
+      {vista === 'tappe' && <TappePSC progettoId={progettoId} onApriSchema={() => setVista('schema')} solaLettura={chiuso} manuale={manuale} />}
       {vista === 'schema' && <SchemiCantiere progettoId={progettoId} solaLettura={chiuso} />}
       {vista === 'finale' && <DocumentoFinale progettoId={progettoId} onChiuso={carica} />}
       {vista === 'questionario' && <Questionario progettoId={progettoId} onApplicate={() => setVista('tappe')} />}

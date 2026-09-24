@@ -16,6 +16,7 @@ import WizardPOS from './components/WizardPOS';
 import VerificaDocumenti from './pages/VerificaDocumenti';
 import DemoBanner from './components/DemoBanner';
 import ElenchiPrezzi from './pages/ElenchiPrezzi';
+import NuovoProgettoManuale from './pages/NuovoProgettoManuale';
 
 export const NotifyCtx = createContext(null);
 const NotifyContext = createContext(() => {});
@@ -76,7 +77,8 @@ export default function App() {
               <Route path="/nuovo-progetto"  element={<NuovoProgetto />} />
               <Route path="/nuovo/notifica"  element={<WizardNotifica />} />
               {/* Il vecchio WizardPSC è sostituito dal flusso a progetti */}
-              <Route path="/nuovo/psc"       element={<Navigate to="/nuovo-progetto?tipo=psc" replace />} />
+              <Route path="/nuovo/psc"       element={<Navigate to="/nuovo-manuale-psc" replace />} />
+              <Route path="/nuovo-manuale-psc" element={<NuovoProgettoManuale />} />
               <Route path="/nuovo/pos"       element={<WizardPOS />} />
               <Route path="/storico"         element={<Storico />} />
               <Route path="/committenti"     element={<AnagraficaCommittenti />} />

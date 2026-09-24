@@ -39,6 +39,7 @@ ETICHETTE_STATO = {
 
 class NuovoProgetto(BaseModel):
     nome: str
+    modalita: str = "ai"          # ai | manuale
 
 
 class Rinomina(BaseModel):
@@ -115,7 +116,7 @@ def _scheda_documento(d) -> dict:
 # ══════════════════════════════════════════════════════════════════════════════
 
 @router.get("")
-def elenco_progetti(user: dict = Depends(get_current_user)):
+def elenco_progetti(modalita: Optional[str] = None, user: dict = Depends(get_current_user)):
     # Blocco 6: al primo accesso l'account riceve la sua copia del progetto di esempio
     from services import esempio
     esempio.distribuisci(user)
@@ -127,12 +128,15 @@ def elenco_progetti(user: dict = Depends(get_current_user)):
                       (SELECT COUNT(*) FROM progetto_documenti d WHERE d.progetto_id = p.id
                               AND d.stato = 'completato') AS n_completati,
                       julianday('now') - julianday(p.ultima_attivita) AS giorni_inattivita
-               FROM progetti p WHERE p.username = ? ORDER BY p.ultima_attivita DESC""",
-            (user["username"],)).fetchall()
+               FROM progetti p WHERE p.username = ?
+                 AND (? IS NULL OR COALESCE(p.modalita, 'ai') = ?)
+               ORDER BY p.ultima_attivita DESC""",
+            (user["username"], modalita, modalita)).fetchall()
     finally:
         conn.close()
     return [{
         "id": r["id"], "nome": r["nome"], "stato": r["stato"], "is_esempio": bool(r["is_esempio"]),
+        "modalita": r["modalita"] or "ai",
         "created_at": r["created_at"], "ultima_attivita": r["ultima_attivita"],
         "n_documenti": r["n_documenti"], "n_completati": r["n_completati"],
         "file_eliminati": bool(r["file_eliminati_at"]),
@@ -151,13 +155,21 @@ def crea_progetto(body: NuovoProgetto, user: dict = Depends(get_current_user)):
     nome = body.nome.strip()
     if not nome:
         raise HTTPException(400, "Indica un nome per il progetto")
+    if body.modalita not in ("ai", "manuale"):
+        raise HTTPException(400, "Modalità non valida")
     conn = get_conn()
     try:
-        cur = conn.execute("INSERT INTO progetti (username, nome) VALUES (?, ?)", (user["username"], nome))
+        cur = conn.execute("INSERT INTO progetti (username, nome, modalita) VALUES (?, ?, ?)",
+                           (user["username"], nome, body.modalita))
         conn.commit()
-        return {"id": cur.lastrowid, "nome": nome}
+        nuovo = cur.lastrowid
     finally:
         conn.close()
+    if body.modalita == "manuale":
+        # Progetto manuale: le 12 tappe nascono già create e vuote, da compilare a mano
+        from services.tappe_psc import crea_tappe_vuote
+        crea_tappe_vuote(nuovo)
+    return {"id": nuovo, "nome": nome, "modalita": body.modalita}
 
 
 @router.get("/{progetto_id}")
@@ -199,6 +211,7 @@ def dettaglio_progetto(progetto_id: int, user: dict = Depends(get_current_user))
 
     return {
         "id": p["id"], "nome": p["nome"], "stato": p["stato"], "is_esempio": bool(p["is_esempio"]),
+        "modalita": p["modalita"] or "ai",
         "created_at": p["created_at"], "file_eliminati": bool(p["file_eliminati_at"]),
         "documenti": documenti,
         "in_lavorazione": any(d["stato"] in ("da_classificare", "in_coda", "in_elaborazione")
