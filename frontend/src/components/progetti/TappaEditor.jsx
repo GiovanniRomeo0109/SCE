@@ -65,22 +65,17 @@ export default function TappaEditor({ progettoId, tappa, tappe, dataInizio, occu
   const daRigenerare = successive.filter(t => !t.modificata_a_mano).map(t => t.numero);
   const daRicontrollare = successive.filter(t => t.modificata_a_mano).map(t => t.numero);
 
-  const conferma = async (numeri, azione) => {
-    if (!numeri.length) return window.confirm(`${azione}?`);
-    let stima = '';
-    try { const r = await stimaTappe(progettoId, numeri); stima = ` Costo stimato: ${euro(r.data.stima_eur)}.`; } catch { /* stima non essenziale */ }
-    return window.confirm(`${azione}?\n\nVerranno rigenerate automaticamente le tappe ${numeri.join(', ')}.${stima}` +
-      (daRicontrollare.length ? `\nLe tappe ${daRicontrollare.join(', ')}, modificate a mano, non verranno toccate ma saranno segnate "da ricontrollare".` : ''));
-  };
-
   const salva = async () => {
-    if (!(await conferma(daRigenerare, 'Salvare le modifiche'))) return;
+    if (!manuale && daRigenerare.length && !window.confirm('Salvare le modifiche?\n\n' +
+      `Le tappe successive (${daRigenerare.join(', ')}) verranno segnate "Da aggiornare": potrai rigenerarle tutte insieme con ` +
+      '"Aggiorna le tappe successive" quando avrai finito di correggere.' +
+      (daRicontrollare.length ? `\nLe tappe ${daRicontrollare.join(', ')}, modificate a mano, saranno segnate "da ricontrollare".` : ''))) return;
     setAttesa(true);
     try {
       const r = await salvaTappa(progettoId, tappa.numero, sezioni);
       setModificata(false);
-      notify(r.data.rigenerate.length
-        ? `Modifiche salvate: rigenerazione delle tappe ${r.data.rigenerate.join(', ')} avviata`
+      notify((r.data.da_aggiornare || []).length
+        ? `Modifiche salvate: tappe ${r.data.da_aggiornare.join(', ')} da aggiornare`
         : 'Modifiche salvate', 'success');
       onAggiorna();
     } catch (e) { notify(e.message, 'error'); }
@@ -90,12 +85,12 @@ export default function TappaEditor({ progettoId, tappa, tappe, dataInizio, occu
   const annulla = () => { setSezioni(clona(tappa.contenuto?.sezioni || [])); setModificata(false); };
 
   const genera = async () => {
-    const numeri = [tappa.numero, ...(tappa.contenuto ? daRigenerare : [])];
+    const numeri = [tappa.numero];
     let msg = tappa.contenuto ? `Rigenerare la tappa ${tappa.numero}` : `Generare la tappa ${tappa.numero}`;
     if (tappa.modificata_a_mano) msg += ' (le tue modifiche manuali verranno sostituite)';
     let stima = '';
     try { const r = await stimaTappe(progettoId, numeri); stima = `\n\nCosto stimato: ${euro(r.data.stima_eur)}.`; } catch { /* stima non essenziale */ }
-    const casc = tappa.contenuto && daRigenerare.length ? `\nIn seguito verranno rigenerate le tappe ${daRigenerare.join(', ')}.` : '';
+    const casc = tappa.contenuto && daRigenerare.length ? `\nLe tappe successive (${daRigenerare.join(', ')}) verranno segnate "Da aggiornare".` : '';
     if (!window.confirm(`${msg}?${casc}${stima}`)) return;
     setAttesa(true);
     try {
@@ -152,8 +147,10 @@ export default function TappaEditor({ progettoId, tappa, tappe, dataInizio, occu
       )}
       {tappa.da_aggiornare && !tappa.da_ricontrollare && (
         <div className="warn-box" style={{ marginBottom: 10, fontSize: '0.82rem' }}>
-          ⚠️ <strong>Da aggiornare:</strong> una tappa precedente è cambiata ma la rigenerazione di questa
-          si è interrotta. Puoi rigenerarla o segnarla come verificata.
+          ⚠️ <strong>Da aggiornare:</strong> una tappa precedente è cambiata.{' '}
+          {tappa.numero === 12
+            ? 'Il controllo di coerenza si rigenera solo su richiesta: usa "Rigenera…" quando hai finito le modifiche.'
+            : 'Rigenerala con "Aggiorna le tappe successive" (in alto), con "Rigenera…", oppure segnala come verificata.'}
           <button className="btn btn-ghost btn-sm" style={{ marginLeft: 8 }} onClick={verificata}>Segna come verificata</button>
         </div>
       )}

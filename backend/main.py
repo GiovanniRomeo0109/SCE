@@ -37,7 +37,7 @@ from fastapi.responses import JSONResponse as _JSONResponse
 _RE_PROGETTO = _re.compile(r"^/api/progetti/(\d+)/(.+)$")
 _AMMESSI_CHIUSO = ("export-psc",)
 # Progetti manuali: niente documenti per l'AI, niente generazione delle tappe, niente ricerca web dei presidi
-_VIETATI_MANUALE = _re.compile(r"^(documenti|documenti/\d+/rielabora|tappe/bozza|tappe/\d+/genera|presidi/cerca)$")
+_VIETATI_MANUALE = _re.compile(r"^(documenti|documenti/\d+/rielabora|tappe/bozza|tappe/aggiorna|tappe/\d+/genera|presidi/cerca)$")
 
 
 @app.middleware("http")

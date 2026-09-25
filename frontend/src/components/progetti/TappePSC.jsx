@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getTappe, avviaBozza, interrompiTappe, stimaTappe, tappeManuali } from '../../utils/api';
+import { getTappe, avviaBozza, interrompiTappe, stimaTappe, tappeManuali, aggiornaTappe } from '../../utils/api';
 import { useNotify } from '../../App';
 import TappaEditor from './TappaEditor';
 
@@ -67,6 +67,17 @@ export default function TappePSC({ progettoId, onApriSchema, solaLettura, manual
     finally { setAvvio(false); }
   };
 
+  // Cascata raccolta: le tappe segnate "da aggiornare" si rigenerano tutte insieme (tappa 12 esclusa)
+  const aggiorna = async () => {
+    const numeri = dati.da_aggiornare || [];
+    let stima = '';
+    try { const r = await stimaTappe(progettoId, numeri); stima = `\n\nCosto stimato: ${euro(r.data.stima_eur)}.`; } catch { /* stima non essenziale */ }
+    if (!window.confirm(`Rigenerare le tappe ${numeri.join(', ')} in base alle modifiche fatte?` +
+      '\nLe tappe modificate a mano restano come sono ("da ricontrollare"); la tappa 12 si rigenera solo dal suo pulsante.' + stima)) return;
+    try { const r = await aggiornaTappe(progettoId); notify(`Aggiornamento avviato: tappe ${r.data.accodate.join(', ')}`, 'success'); carica(); }
+    catch (e) { notify(e.message, 'error'); }
+  };
+
   const compilaAMano = async () => {
     if (!window.confirm('Creare le tappe vuote da compilare a mano, senza AI? Le potrai riempire sezione per sezione.')) return;
     try { const r = await tappeManuali(progettoId); notify(`${r.data.create.length} tappe pronte da compilare`, 'success'); carica(); }
@@ -105,6 +116,11 @@ export default function TappePSC({ progettoId, onApriSchema, solaLettura, manual
         </div>
         {!manuale && !inCorso && !solaLettura && !documenti.completati && !documenti.in_lavorazione && generate < 12 && (
           <button className="btn btn-ghost" onClick={compilaAMano} data-testid="compila-senza-documenti">✍️ Compila senza documenti</button>
+        )}
+        {!inCorso && !solaLettura && !manuale && (dati.da_aggiornare || []).length > 0 && (
+          <button className="btn btn-gold" onClick={aggiorna} data-testid="aggiorna-successive">
+            🔄 Aggiorna le tappe successive ({dati.da_aggiornare.length})
+          </button>
         )}
         {solaLettura || manuale ? null : inCorso ? (
           <button className="btn btn-ghost" onClick={interrompi}>⏹ Interrompi</button>

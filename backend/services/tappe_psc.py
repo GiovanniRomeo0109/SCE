@@ -36,6 +36,11 @@ CARTELLA_SKILL = os.path.join(os.path.dirname(__file__), "..", "skill")
 SKILL_BASE = ["METODOLOGIA_PSC.md", "SKILL.md", "RISCHI_PSC.md"]
 SKILL_AMIANTO = "AMIANTO.md"
 STATI_ATTIVI = ("in_coda", "in_generazione")
+TAPPA_SOLO_SU_RICHIESTA = 12          # controllo di coerenza: mai rigenerato automaticamente
+# Cache da 1 ora per le parti stabili (istruzioni, skill, fascicolo): costa 2× in scrittura ma le
+# correzioni fatte nella stessa ora la rileggono al 10%. Se l'API non la accetta si ripiega su 5 minuti.
+CACHE_1H = {"type": "ephemeral", "ttl": "1h"}
+CACHE_5M = {"type": "ephemeral"}
 
 SYSTEM_BASE = """Sei un Coordinatore per la Sicurezza in fase di Progettazione (CSP) esperto.
 Stai redigendo, tappa per tappa, un Piano di Sicurezza e Coordinamento (D.Lgs. 81/2008,
@@ -75,7 +80,7 @@ def costruisci_system(con_amianto: bool) -> list:
         testo = _leggi_skill(nome)
         if testo:
             parti.append(f"\n\n===== SKILL: {nome} =====\n{testo}")
-    return [{"type": "text", "text": "".join(parti), "cache_control": {"type": "ephemeral"}}]
+    return [{"type": "text", "text": "".join(parti), "cache_control": CACHE_1H}]
 
 
 _RE_AMIANTO = re.compile(r"amianto|eternit|fibro-?cemento|cemento[- ]amianto|asbest", re.IGNORECASE)
@@ -223,10 +228,45 @@ def cascata(progetto_id: int, da_numero: int) -> dict:
         if t["modificata_a_mano"]:
             _aggiorna(progetto_id, t["numero"], da_ricontrollare=1)
             da_ricontrollare.append(t["numero"])
+        elif t["numero"] == TAPPA_SOLO_SU_RICHIESTA:
+            _aggiorna(progetto_id, t["numero"], da_aggiornare=1)      # si rigenera solo su richiesta
         else:
             _aggiorna(progetto_id, t["numero"], stato="in_coda", errore=None)
             rigenerate.append(t["numero"])
     return {"rigenerate": rigenerate, "da_ricontrollare": da_ricontrollare}
+
+
+def segnala_successive(progetto_id: int, da_numero: int) -> dict:
+    """
+    Cascata RACCOLTA: dopo un cambiamento della tappa `da_numero` le successive già generate NON
+    vengono rigenerate subito ma segnate "da aggiornare" (quelle modificate a mano "da ricontrollare").
+    Il CSP le rigenera tutte insieme con "Aggiorna le tappe successive", quando ha finito di correggere.
+    """
+    da_aggiornare, da_ricontrollare = [], []
+    for t in leggi_tappe(progetto_id):
+        if t["numero"] <= da_numero or not t["contenuto_json"] or t["stato"] in STATI_ATTIVI:
+            continue
+        if t["modificata_a_mano"]:
+            _aggiorna(progetto_id, t["numero"], da_ricontrollare=1)
+            da_ricontrollare.append(t["numero"])
+        else:
+            _aggiorna(progetto_id, t["numero"], da_aggiornare=1)
+            da_aggiornare.append(t["numero"])
+    return {"rigenerate": [], "da_aggiornare": da_aggiornare, "da_ricontrollare": da_ricontrollare}
+
+
+def tappe_da_aggiornare(progetto_id: int) -> list:
+    """Tappe che il pulsante "Aggiorna le tappe successive" rigenera (tappa 12 esclusa)."""
+    return [t["numero"] for t in leggi_tappe(progetto_id)
+            if t["da_aggiornare"] and t["contenuto_json"] and not t["modificata_a_mano"]
+            and t["numero"] != TAPPA_SOLO_SU_RICHIESTA and t["stato"] not in STATI_ATTIVI]
+
+
+def aggiorna_successive(progetto_id: int) -> list:
+    numeri = tappe_da_aggiornare(progetto_id)
+    for n in numeri:
+        _aggiorna(progetto_id, n, stato="in_coda", errore=None)
+    return numeri
 
 
 def avvia_bozza(progetto_id: int) -> dict:
@@ -283,8 +323,8 @@ def salva_modifica_csp(progetto_id: int, numero: int, dati: dict) -> dict:
         costi_sicurezza.sincronizza(progetto_id)
     if e_manuale(progetto_id):
         # Progetto manuale: tutte le tappe sono scritte dal CSP, nessuna cascata né segnalazione
-        return {"rigenerate": [], "da_ricontrollare": []}
-    return cascata(progetto_id, numero)
+        return {"rigenerate": [], "da_aggiornare": [], "da_ricontrollare": []}
+    return segnala_successive(progetto_id, numero)
 
 
 def segna_verificata(progetto_id: int, numero: int):
@@ -371,23 +411,37 @@ def applica_risposte(progetto_id: int) -> dict:
 # Generazione di una tappa
 # ══════════════════════════════════════════════════════════════════════════════
 
-def _tappe_precedenti_testo(tappe: list, numero: int) -> str:
-    parti = []
+def _blocchi_tappe_precedenti(tappe: list, numero: int) -> list:
+    """Un blocco di testo per ogni tappa precedente (stabile tra una chiamata e l'altra, così la
+    parte già letta resta in cache). Sezioni in forma compatta: titolo + testo o colonne/righe."""
+    blocchi = []
     for t in tappe:
         if t["numero"] >= numero:
             break
         c = contenuto(t)
         d = td.definizione(t["numero"])
         if not c:
-            parti.append(f"## Tappa {t['numero']} — {d['titolo']}: NON ANCORA GENERATA")
+            blocchi.append(f"## Tappa {t['numero']} — {d['titolo']}: NON ANCORA GENERATA")
             continue
         origine = "modificata dal CSP" if t["modificata_a_mano"] else "generata"
-        parti.append(f"## Tappa {t['numero']} — {d['titolo']} ({origine})\n"
-                     + json.dumps({"sezioni": c["sezioni"]}, ensure_ascii=False, separators=(",", ":")))
-    return "\n\n".join(parti) if parti else "Nessuna tappa precedente (questa è la prima)."
+        sezioni = [{"titolo": x["titolo"], **({"testo": x.get("testo", "")} if x["tipo"] == "testo"
+                                               else {"colonne": x["colonne"], "righe": x["righe"]})}
+                   for x in c["sezioni"]]
+        blocchi.append(f"## Tappa {t['numero']} — {d['titolo']} ({origine})\n"
+                       + json.dumps(sezioni, ensure_ascii=False, separators=(",", ":")))
+    return blocchi
 
 
 def costruisci_richiesta(progetto: dict, numero: int, tappe: list, fascicolo: dict, nota: str = None) -> dict:
+    """
+    Ordine dei blocchi pensato per il prompt caching (prefisso identico tra le tappe):
+      system  = istruzioni + skill                                  [cache 1 ora]
+      user[0] = fascicolo di progetto                               [cache 1 ora]
+      user[1] = data di inizio + risposte al questionario
+      user[2] = intestazione "TAPPE PRECEDENTI"
+      user[3..] = una tappa precedente per blocco                   [cache 5 min sull'ultima]
+      ultimo  = istruzioni della tappa (+ presidi per la tappa 9)   [mai in cache: cambia sempre]
+    """
     d = td.definizione(numero)
     data_inizio = progetto.get("data_inizio_lavori") or (
         "non indicata dal CSP: usa i giorni di cantiere (1° giorno = lunedì; settimana 1 = dal 1° al 7° giorno, "
@@ -398,23 +452,44 @@ def costruisci_richiesta(progetto: dict, numero: int, tappe: list, fascicolo: di
         f"OBIETTIVO\n{d['obiettivo']}\n"
         + (f"Riferimenti nella METODOLOGIA PSC: {d['punti_metodologia']}.\n" if d.get("punti_metodologia") else "")
         + "\n"
+        + (f"{_presidi_per_prompt(progetto['id'])}\n\n" if numero == 9 else "")
         + (f"NOTA DEL CSP PER QUESTA GENERAZIONE (seguila con priorità):\n{nota}\n\n" if nota else "")
-        + "STRUTTURA DA RESTITUIRE (sostituisci i \"...\" con i contenuti; aggiungi tutte le righe "
-          "necessarie alle tabelle; lascia le liste vuote se non servono):\n"
-        + "<<SCHEMA>>\n" + json.dumps(td.scheletro(numero), ensure_ascii=False, indent=1) + "\n<<FINE_SCHEMA>>"
+        + "SEZIONI DELLA TAPPA (id, tipo, titolo; per le tabelle l'ordine delle colonne):\n"
+        + td.legenda(numero) + "\n\n"
+        + "RESTITUISCI un JSON COMPATTO, su una sola riga, senza indentazione, con questa struttura "
+          "(sostituisci i \"...\" con i contenuti; per le tabelle ogni riga è un array con i valori "
+          "nell'ordine delle colonne indicate sopra; aggiungi tutte le righe necessarie; lascia le liste "
+          "vuote se non servono; non riscrivere titoli né colonne):\n"
+        + "<<SCHEMA>>\n" + json.dumps(td.scheletro(numero), ensure_ascii=False, separators=(",", ":")) + "\n<<FINE_SCHEMA>>"
     )
+    precedenti = _blocchi_tappe_precedenti(tappe, numero)
+    blocchi_prec = [{"type": "text", "text": testo} for testo in precedenti]
+    if blocchi_prec:
+        blocchi_prec[-1]["cache_control"] = CACHE_5M
+    else:
+        blocchi_prec = [{"type": "text", "text": "Nessuna tappa precedente (questa è la prima)."}]
     return {
         "system": costruisci_system(fascicolo["amianto"]),
         "messages": [{"role": "user", "content": [
-            {"type": "text", "text": fascicolo["testo"], "cache_control": {"type": "ephemeral"}},
+            {"type": "text", "text": fascicolo["testo"], "cache_control": CACHE_1H},
             {"type": "text", "text": f"DATA DI INIZIO LAVORI (indicata dal CSP): {data_inizio}\n\n"
-                                     f"RISPOSTE DEL CSP AL QUESTIONARIO DEL SOPRALLUOGO:\n{_risposte_per_prompt(progetto['id'])}"
-                                     + (f"\n\n{_presidi_per_prompt(progetto['id'])}" if numero == 9 else "")},
-            {"type": "text", "text": "TAPPE PRECEDENTI (versione corrente):\n\n" + _tappe_precedenti_testo(tappe, numero)},
+                                     f"RISPOSTE DEL CSP AL QUESTIONARIO DEL SOPRALLUOGO:\n{_risposte_per_prompt(progetto['id'])}"},
+            {"type": "text", "text": "TAPPE PRECEDENTI (versione corrente):"},
+            *blocchi_prec,
             {"type": "text", "text": istruzioni},
         ]}],
         "max_tokens": d.get("max_tokens", MAX_TOKENS_DEFAULT),
     }
+
+
+def senza_ttl_1h(richiesta: dict) -> dict:
+    """Copia della richiesta con la cache standard (5 minuti), se l'API rifiuta quella da 1 ora."""
+    import copy
+    r = copy.deepcopy(richiesta)
+    for b in r["system"] + r["messages"][0]["content"]:
+        if b.get("cache_control"):
+            b["cache_control"] = dict(CACHE_5M)
+    return r
 
 
 def _presidi_per_prompt(progetto_id: int) -> str:
@@ -422,18 +497,18 @@ def _presidi_per_prompt(progetto_id: int) -> str:
     return testo_per_prompt(progetto_id) or "Presidi di emergenza non ancora cercati: indicali come DA VERIFICARE."
 
 
-def _conta_token_stimati(richiesta: dict) -> tuple:
-    """(token in cache, token non in cache) stimati dai caratteri."""
-    in_cache = len(richiesta["system"][0]["text"]) + len(richiesta["messages"][0]["content"][0]["text"])
-    fuori = sum(len(b["text"]) for b in richiesta["messages"][0]["content"][1:])
-    return int(in_cache / 3.5), int(fuori / 3.5)
-
-
 def stima_tappa_eur(richiesta: dict, cache_calda: bool = True) -> float:
-    in_cache, fuori = _conta_token_stimati(richiesta)
-    fattore = 0.10 if cache_calda else 1.25
-    input_equiv = int(in_cache * fattore) + fuori
-    return stima_costo_eur(MODELLO, input_equiv, int(richiesta["max_tokens"] * 0.55))
+    """Stima prudente: parti stabili lette dalla cache (10%) se calda, altrimenti scritte (2×, 1 ora);
+    tappe precedenti lette dalla cache tranne l'ultima (scritta, 1,25×); istruzioni sempre a prezzo pieno."""
+    cont = richiesta["messages"][0]["content"]
+    t = lambda x: len(x) / 3.5
+    stabile = t(richiesta["system"][0]["text"]) + t(cont[0]["text"])
+    prec = [t(b["text"]) for b in cont[3:-1]]
+    fuori = t(cont[1]["text"]) + t(cont[2]["text"]) + t(cont[-1]["text"])
+    input_equiv = (stabile * (0.10 if cache_calda else 2.0)
+                   + sum(prec[:-1]) * (0.10 if cache_calda else 1.25)
+                   + (prec[-1] * 1.25 if prec else 0) + fuori)
+    return stima_costo_eur(MODELLO, int(input_equiv), int(richiesta["max_tokens"] * 0.5))
 
 
 def _progetto(progetto_id: int) -> dict:
@@ -485,8 +560,7 @@ def esegui_tappa(tappa: dict):
     _aggiorna(progetto_id, numero, stato="in_generazione", errore=None)
     try:
         client = TrackedClient(user, "tappa_psc")
-        risposta = client.messages.create(model=MODELLO, max_tokens=richiesta["max_tokens"],
-                                          system=richiesta["system"], messages=richiesta["messages"])
+        risposta = _chiama(client, richiesta)
     except Exception as e:
         log.exception(f"Errore generazione tappa {numero} del progetto {progetto_id}")
         _aggiorna(progetto_id, numero, stato="errore", errore=f"Errore AI: {getattr(e, 'message', str(e))}")
@@ -521,14 +595,33 @@ def esegui_tappa(tappa: dict):
         from services import costi_sicurezza
         costi_sicurezza.sincronizza(progetto_id)
 
-    # Cascata: le successive già generate si rigenerano (quelle in coda per la bozza lo sono già)
-    cascata(progetto_id, numero)
+    # Cascata raccolta: le successive già generate e non in coda vengono segnate "da aggiornare"
+    segnala_successive(progetto_id, numero)
     _aggiorna(progetto_id, numero, stato="generata")
 
     # Fine della catena?
     ancora = [t for t in leggi_tappe(progetto_id) if t["stato"] in STATI_ATTIVI]
     if not ancora and progetto.get("bozza_stato") == "in_corso":
         _aggiorna_progetto(progetto_id, bozza_stato="completata", bozza_messaggio=None)
+
+
+_TTL_1H_ACCETTATO = True
+
+
+def _chiama(client, richiesta: dict):
+    global _TTL_1H_ACCETTATO
+    r = richiesta if _TTL_1H_ACCETTATO else senza_ttl_1h(richiesta)
+    try:
+        return client.messages.create(model=MODELLO, max_tokens=r["max_tokens"],
+                                      system=r["system"], messages=r["messages"])
+    except Exception as e:
+        if _TTL_1H_ACCETTATO and "ttl" in str(e).lower():
+            log.warning("Cache da 1 ora non accettata dall'API: uso la cache standard da 5 minuti")
+            _TTL_1H_ACCETTATO = False
+            r = senza_ttl_1h(richiesta)
+            return client.messages.create(model=MODELLO, max_tokens=r["max_tokens"],
+                                          system=r["system"], messages=r["messages"])
+        raise
 
 
 def _ora():

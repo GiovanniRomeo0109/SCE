@@ -99,6 +99,7 @@ def elenco_tappe(progetto_id: int, user: dict = Depends(get_current_user)):
         "tappe": tappe,
         "bozza": {"stato": p.get("bozza_stato"), "messaggio": p.get("bozza_messaggio")},
         "in_corso": any(t["stato"] in tappe_psc.STATI_ATTIVI for t in tappe),
+        "da_aggiornare": tappe_psc.tappe_da_aggiornare(progetto_id),
         "data_inizio_lavori": p.get("data_inizio_lavori"),
         "documenti": doc,
         "budget": stato_budget(user),
@@ -127,6 +128,20 @@ def genera_bozza(progetto_id: int, user: dict = Depends(get_current_user)):
     esito = tappe_psc.avvia_bozza(progetto_id)
     worker_progetti.sveglia()
     return esito
+
+
+@router.post("/{progetto_id}/tappe/aggiorna")
+def aggiorna_tappe(progetto_id: int, user: dict = Depends(get_current_user)):
+    """Cascata raccolta: rigenera in ordine tutte le tappe "da aggiornare" (tappa 12 esclusa)."""
+    _verifica_progetto(progetto_id, user)
+    _controlla_prerequisiti(progetto_id)
+    numeri = tappe_psc.tappe_da_aggiornare(progetto_id)
+    if not numeri:
+        raise HTTPException(400, "Nessuna tappa da aggiornare")
+    assicura_budget(user, tappe_psc.stima_generazione(progetto_id, numeri[:1]))
+    accodate = tappe_psc.aggiorna_successive(progetto_id)
+    worker_progetti.sveglia()
+    return {"accodate": accodate}
 
 
 @router.post("/{progetto_id}/tappe/interrompi")

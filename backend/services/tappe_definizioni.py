@@ -236,18 +236,26 @@ def definizione(numero: int) -> dict:
 
 
 def scheletro(numero: int) -> dict:
-    """Struttura JSON che l'AI deve restituire per la tappa."""
-    t = definizione(numero)
-    sezioni = []
-    for s in t["sezioni"]:
-        if s["tipo"] == T:
-            sezioni.append({"id": s["id"], "titolo": s["titolo"], "tipo": T, "testo": "..."})
-        else:
-            sezioni.append({"id": s["id"], "titolo": s["titolo"], "tipo": TAB,
-                            "colonne": s["colonne"], "righe": [["..." for _ in s["colonne"]]]})
+    """Formato COMPATTO che l'AI deve restituire: solo i contenuti, indicizzati per id di sezione.
+    Titoli e colonne non vengono riscritti nella risposta (li ricostruisce normalizza): meno token
+    di output a parità di contenuto."""
+    sezioni = {}
+    for s in definizione(numero)["sezioni"]:
+        sezioni[s["id"]] = "..." if s["tipo"] == T else [["..." for _ in s["colonne"]]]
     return {"sezioni": sezioni,
             "da_verificare": [{"campo": "...", "motivo": "..."}],
             "domande_sopralluogo": ["..."]}
+
+
+def legenda(numero: int) -> str:
+    """Titolo e colonne di ogni sezione, dati una sola volta nelle istruzioni."""
+    righe = []
+    for s in definizione(numero)["sezioni"]:
+        if s["tipo"] == T:
+            righe.append(f'- "{s["id"]}" (testo): {s["titolo"]}')
+        else:
+            righe.append(f'- "{s["id"]}" (tabella, ogni riga = [{" | ".join(s["colonne"])}]): {s["titolo"]}')
+    return "\n".join(righe)
 
 
 def _cella(v) -> str:
@@ -265,7 +273,13 @@ def normalizza(numero: int, dati) -> dict:
     """
     t = definizione(numero)
     dati = dati if isinstance(dati, dict) else {}
-    ricevute = {s.get("id"): s for s in dati.get("sezioni", []) if isinstance(s, dict)}
+    grezze = dati.get("sezioni", [])
+    if isinstance(grezze, dict):
+        # formato compatto dell'AI: {"id": "testo"} oppure {"id": [[riga], ...]}
+        ricevute = {k: ({"testo": v} if isinstance(v, str) else {"righe": v if isinstance(v, list) else []})
+                    for k, v in grezze.items()}
+    else:
+        ricevute = {s.get("id"): s for s in grezze if isinstance(s, dict)}
     sezioni = []
     for s in t["sezioni"]:
         r = ricevute.get(s["id"], {})

@@ -696,10 +696,10 @@ Sei un ispettore senior. Verifica la CONGRUITÀ del POS rispetto al PSC.
 Confronta ogni elemento punto per punto.
 
 DATI PSC — {psc.filename}:
-{json.dumps(psc_dati, ensure_ascii=False, indent=2)}
+{json.dumps(psc_dati, ensure_ascii=False, separators=(",", ":"))}
 
 DATI POS — {pos_file.filename}:
-{json.dumps(pos_dati, ensure_ascii=False, indent=2)}
+{json.dumps(pos_dati, ensure_ascii=False, separators=(",", ":"))}
 
 ELEMENTI DA VERIFICARE (All. XV punto 2.3.2 e 3.2.1 lett. g-h):
 
@@ -746,10 +746,14 @@ Rispondi SOLO con JSON valido:
   }}
 }}
 """
+        # Skill + dati del PSC sono identici per tutti i POS: in cache (i POS successivi li rileggono al 10%)
+        _i = prompt_cong.index("\nDATI POS — ")
+        contenuto_cong = [{"type": "text", "text": prompt_cong[:_i], "cache_control": {"type": "ephemeral"}},
+                          {"type": "text", "text": prompt_cong[_i:]}]
         r_cong = client.messages.create(
             model="claude-sonnet-4-6", max_tokens=8000,
             system="Ispettore senior inflessibile. Segnala ogni incongruenza. SOLO JSON valido.",
-            messages=[{"role": "user", "content": prompt_cong}],
+            messages=[{"role": "user", "content": contenuto_cong}],
         )
         raw_cong = r_cong.content[0].text
         log.debug(f"CONGRUITÀ {pos_file.filename}:\n{raw_cong}")

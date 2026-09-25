@@ -318,17 +318,25 @@ def costruisci_richiesta_estrazione(blocco: dict, nome_file: str, tipo: str) -> 
         tipo=etichetta(tipo), nome_file=nome_file, pagine=pagine)}]
 
 
+def _prova_json(testo: str):
+    """json.loads tollerante: a capo e tabulazioni dentro le stringhe (strict=False) e virgole finali."""
+    for candidato in (testo, re.sub(r",\s*([}\]])", r"\1", testo)):
+        try:
+            return json.loads(candidato, strict=False)
+        except json.JSONDecodeError:
+            continue
+    return None
+
+
 def pulisci_json(testo: str):
+    """Legge il JSON della risposta AI tollerando i difetti più comuni, per non dover ripetere
+    (e pagare di nuovo) una chiamata andata a buon fine."""
     testo = (testo or "").strip()
     testo = re.sub(r"^```(?:json)?\s*", "", testo)
     testo = re.sub(r"\s*```\s*$", "", testo)
-    try:
-        return json.loads(testo)
-    except json.JSONDecodeError:
+    dati = _prova_json(testo)
+    if dati is None:
         m = re.search(r"\{.*\}", testo, re.DOTALL)
         if m:
-            try:
-                return json.loads(m.group(0))
-            except json.JSONDecodeError:
-                pass
-    return None
+            dati = _prova_json(m.group(0))
+    return dati

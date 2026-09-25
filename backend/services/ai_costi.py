@@ -37,7 +37,8 @@ PREZZI_USD = {
     "claude-haiku-4-5":          (1.00, 5.00),
     "claude-opus-4":             (15.00, 75.00),
 }
-CACHE_WRITE_MULT = 1.25   # scrittura in cache: +25% sul prezzo di input
+CACHE_WRITE_MULT = 1.25   # scrittura in cache da 5 minuti: +25% sul prezzo di input
+CACHE_WRITE_1H_MULT = 2.0 # scrittura in cache da 1 ora: il doppio del prezzo di input
 CACHE_READ_MULT  = 0.10   # lettura dalla cache: 10% del prezzo di input
 WEB_SEARCH_USD   = 0.01   # per singola ricerca web
 
@@ -79,9 +80,15 @@ def calcola_costo_usd(model: str, usage) -> float:
     cache_r    = getattr(usage, "cache_read_input_tokens", 0) or 0
     server     = getattr(usage, "server_tool_use", None)
     ricerche   = (getattr(server, "web_search_requests", 0) or 0) if server else 0
+    # Scritture in cache da 1 ora (più care) se l'API ne riporta il dettaglio
+    dettaglio = getattr(usage, "cache_creation", None)
+    cache_w_1h = (getattr(dettaglio, "ephemeral_1h_input_tokens", 0) or 0) if dettaglio else 0
+    cache_w_1h = min(cache_w_1h, cache_w)
+    cache_w -= cache_w_1h
     costo = (
         inp * p_in
         + cache_w * p_in * CACHE_WRITE_MULT
+        + cache_w_1h * p_in * CACHE_WRITE_1H_MULT
         + cache_r * p_in * CACHE_READ_MULT
         + out * p_out
     ) / 1_000_000

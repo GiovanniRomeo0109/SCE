@@ -162,6 +162,7 @@ export const getTappe          = (id)              => apiFetch(`/api/progetti/${
 export const stimaTappe        = (id, numeri)      => apiFetch(`/api/progetti/${id}/tappe/stima?numeri=${numeri.join(',')}`);
 export const avviaBozza        = (id)              => apiFetch(`/api/progetti/${id}/tappe/bozza`, { method: 'POST' });
 export const interrompiTappe   = (id)              => apiFetch(`/api/progetti/${id}/tappe/interrompi`, { method: 'POST' });
+export const aggiornaTappe     = (id)              => apiFetch(`/api/progetti/${id}/tappe/aggiorna`, { method: 'POST' });
 export const generaTappa       = (id, n, nota)     => apiFetch(`/api/progetti/${id}/tappe/${n}/genera`, { method: 'POST', body: JSON.stringify({ nota: nota || null }) });
 export const salvaTappa        = (id, n, sezioni)  => apiFetch(`/api/progetti/${id}/tappe/${n}`, { method: 'PUT', body: JSON.stringify({ sezioni }) });
 export const tappaVerificata   = (id, n)           => apiFetch(`/api/progetti/${id}/tappe/${n}/verificata`, { method: 'POST' });
@@ -241,7 +242,7 @@ const api = {
   caricaDocumentiProgetto, correggiTipoDocumento, rielaboraDocumento,
   eliminaDocumentoProgetto, getDatiDocumento, mappaturaDocumento,
   getElenchi, caricaElenco, rinominaElenco, eliminaElenco, mappaturaElenco, cercaVociElenco,
-  getTappe, stimaTappe, avviaBozza, interrompiTappe, generaTappa, salvaTappa, tappaVerificata,
+  getTappe, stimaTappe, avviaBozza, interrompiTappe, aggiornaTappe, generaTappa, salvaTappa, tappaVerificata,
   salvaDatiCSP, getQuestionario, rispondiDomanda, applicaRisposte,
   getCosti, aggiornaCosti, cercaVociCosti, modificaCosto, getUominiGiorno, salvaUominiGiorno, exportUrl,
   getPresidi, salvaIndirizzo, cercaPresidi, aggiungiPresidio, modificaPresidio, eliminaPresidio,
