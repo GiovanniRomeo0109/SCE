@@ -1,5 +1,5 @@
 """
-services/tappe_definizioni.py — Le 12 tappe del PSC (sequenza logica della metodologia SafetyDocs)
+services/tappe_definizioni.py — Le 12 tappe del PSC (sequenza logica della metodologia SCE)
 
 Ogni tappa produce SEZIONI STRUTTURATE:
   - tipo "testo":   paragrafo modificabile

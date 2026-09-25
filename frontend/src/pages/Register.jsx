@@ -46,7 +46,7 @@ export default function Register({ onLogin }) {
       localStorage.setItem('sce_token', data.access_token);
       localStorage.setItem('sce_user', JSON.stringify({ username: data.username, nome_cognome: data.nome_cognome }));
       onLogin(data);
-      notify('Benvenuto in SafetyDocs! 🎉', 'success');
+      notify('Benvenuto in SCE! 🎉', 'success');
     } catch (err) {
       notify(err.message, 'error');
     } finally {
@@ -81,7 +81,7 @@ export default function Register({ onLogin }) {
 
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <div style={{ fontSize: 36, marginBottom: 8 }}>🏗️</div>
-          <h1 style={{ color: '#1A3A5C', fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>SafetyDocs</h1>
+          <h1 style={{ color: '#1A3A5C', fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>SCE</h1>
           <p style={{ color: '#5A6B7D', fontSize: '0.88rem', margin: '6px 0 0' }}>Crea il tuo account gratuito</p>
         </div>
 

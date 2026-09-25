@@ -114,7 +114,7 @@ def esporta_dxf(schema: dict) -> bytes:
     doc.units = ezdxf.units.M
     msp = doc.modelspace()
     doc.layers.add("SCE_AVVISO", color=1)
-    msp.add_text("SCHEMA INDICATIVO GENERATO DA SAFETYDOCS - DA RIFINIRE IN CAD",
+    msp.add_text("SCHEMA INDICATIVO GENERATO DA SCE - DA RIFINIRE IN CAD",
                  dxfattribs={"layer": "SCE_AVVISO", "height": 0.8}).set_placement(P(0, -40))
 
     for el in json.loads(schema.get("elementi_json") or "[]"):

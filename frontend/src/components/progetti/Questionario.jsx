@@ -53,7 +53,7 @@ export default function Questionario({ progettoId, onApplicate }) {
  .meta{color:#5A6B7D;font-size:10px;margin-bottom:12px}
 </style></head><body>
 <h1>Questionario per il sopralluogo</h1>
-<div class="meta">Progetto: ${esc(dati.progetto)} · Stampato il ${new Date().toLocaleDateString('it-IT')} · SafetyDocs — D.Lgs. 81/2008</div>
+<div class="meta">Progetto: ${esc(dati.progetto)} · Stampato il ${new Date().toLocaleDateString('it-IT')} · SCE — D.Lgs. 81/2008</div>
 ${dati.gruppi.map(g => `<h2>Tappa ${g.tappa} — ${esc(g.titolo)}</h2>
 ${g.domande.map((d, i) => `<div class="q"><div class="t">${i + 1}. ${esc(d.testo)}
  ${d.origine === 'da_verificare' ? '<span class="tag">[DA VERIFICARE]</span>' : ''}</div>

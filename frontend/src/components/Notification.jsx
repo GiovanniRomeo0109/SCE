@@ -1,11 +1,5 @@
-import { useEffect } from 'react';
-
+/** Messaggio a comparsa. La durata è gestita da App (un solo timer per tutti i messaggi). */
 export default function Notification({ message, type = 'info', onClose }) {
-  useEffect(() => {
-    const t = setTimeout(onClose, 4500);
-    return () => clearTimeout(t);
-  }, [onClose]);
-
   const icons = { success: '✅', error: '❌', info: 'ℹ️' };
   return (
     <div className={`notification notification-${type}`}>

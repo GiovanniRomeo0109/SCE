@@ -1,4 +1,4 @@
-# METODOLOGIA PSC — Procedura del CSP (fornita dal titolare di SafetyDocs)
+# METODOLOGIA PSC — Procedura del CSP (fornita dal titolare di SCE)
 
 > Questa è la metodologia di riferimento per costruire il PSC tappa per tappa.
 > Segui questo ragionamento, adattandolo ai dati del fascicolo di progetto.

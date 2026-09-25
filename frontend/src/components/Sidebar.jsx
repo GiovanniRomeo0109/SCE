@@ -23,7 +23,7 @@ export default function Sidebar({ onLogout }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
-        <h2>🦺 SafetyDocs</h2>
+        <h2>🏗️ SCE</h2>
         <p>Sicurezza Cantieri D.Lgs 81/08</p>
       </div>
       <nav className="sidebar-nav">

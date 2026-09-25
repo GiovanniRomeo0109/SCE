@@ -253,7 +253,7 @@ def genera_verbale_incongruenze(
     story.append(t_firme)
     story.append(Spacer(1, 0.5*cm))
     story.append(Paragraph(
-        "⚠ Documento generato automaticamente da SafetyDocs come supporto al professionista. "
+        "⚠ Documento generato automaticamente da SCE come supporto al professionista. "
         "Deve essere verificato e firmato dal CSE e dal Datore di Lavoro prima dell'utilizzo.",
         S["warn"]))
 
@@ -424,7 +424,7 @@ def genera_report_verifica(
 
     story.append(Spacer(1, 0.5*cm))
     story.append(Paragraph(
-        f"Report generato il {datetime.now().strftime('%d/%m/%Y %H:%M')} da SafetyDocs — "
+        f"Report generato il {datetime.now().strftime('%d/%m/%Y %H:%M')} da SCE — "
         "Verifica automatica. Deve essere revisionata da un professionista abilitato prima dell'utilizzo.",
         S["warn"]))
 

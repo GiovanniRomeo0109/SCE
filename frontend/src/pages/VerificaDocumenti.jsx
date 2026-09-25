@@ -383,7 +383,7 @@ export default function VerificaDocumenti() {
     <h1>📋 Verbale Incongruenze PSC — POS</h1>
     <p>Cantiere: ${cantiere}</p>
     <p>PSC: ${pscFilename || '—'} &nbsp;|&nbsp; POS: ${posFilename || '—'}</p>
-    <p>Data: ${now} &nbsp;|&nbsp; SafetyDocs — D.Lgs. 81/2008 All. XV</p>
+    <p>Data: ${now} &nbsp;|&nbsp; SCE — D.Lgs. 81/2008 All. XV</p>
   </div>
 
   <p>Il Coordinatore per la Sicurezza in fase di Esecuzione (CSE), a seguito della verifica di congruità
@@ -498,7 +498,7 @@ export default function VerificaDocumenti() {
 <body>
   <div class="header">
     <h1>🔍 Report Verifica ${tipoLabel}</h1>
-    <p>File: ${risultato.nome_file || '—'} &nbsp;|&nbsp; Data: ${risultato.data_verifica || new Date().toLocaleDateString('it-IT')} &nbsp;|&nbsp; SafetyDocs — D.Lgs. 81/2008</p>
+    <p>File: ${risultato.nome_file || '—'} &nbsp;|&nbsp; Data: ${risultato.data_verifica || new Date().toLocaleDateString('it-IT')} &nbsp;|&nbsp; SCE — D.Lgs. 81/2008</p>
   </div>
 
   <div style="display:flex;align-items:center;gap:24px;margin-bottom:12px">

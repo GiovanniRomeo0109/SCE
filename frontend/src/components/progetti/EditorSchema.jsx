@@ -4,7 +4,7 @@ import {
 } from '../../utils/api';
 import { useNotify } from '../../App';
 
-const AVVISO = 'Schema indicativo generato con SafetyDocs: va rifinito in CAD prima dell\'uso definitivo.';
+const AVVISO = 'Schema indicativo generato con SCE: va rifinito in CAD prima dell\'uso definitivo.';
 const ICONE = {
   accesso_carrabile: '🚚', accesso_pedonale: '🚶', spogliatoio: '👕', ufficio: '🗂️', refettorio: '🍽️', wc: '🚻',
   deposito: '📦', rifiuti: '🗑️', gru: '🏗️', autogru: '🚛', betoniera: '⚙️', quadro: '⚡', estintore: '🧯',

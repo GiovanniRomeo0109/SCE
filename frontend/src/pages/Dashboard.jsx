@@ -21,7 +21,7 @@ export default function Dashboard() {
     <div>
       <div className="page-header">
         <h1>Dashboard</h1>
-        <p>Benvenuto in SafetyDocs — gestione documentazione sicurezza cantieri D.Lgs. 81/2008</p>
+        <p>Benvenuto in SCE — gestione documentazione sicurezza cantieri D.Lgs. 81/2008</p>
       </div>
 
       <div className="card-grid">

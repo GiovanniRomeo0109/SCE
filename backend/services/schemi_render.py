@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from services.schemi import ELEMENTI, FORMATO_VUOTO
 
-AVVISO = "Schema indicativo generato con SafetyDocs: va rifinito in CAD prima dell'uso definitivo."
+AVVISO = "Schema indicativo generato con SCE: va rifinito in CAD prima dell'uso definitivo."
 COLORI = {"recinzione": (192, 57, 43), "ponteggio": (46, 109, 180), "percorso": (39, 174, 96),
           "gru": (142, 68, 173), "testo": (26, 58, 92)}
 ORO = (200, 139, 42)

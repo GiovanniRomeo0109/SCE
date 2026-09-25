@@ -1,4 +1,4 @@
-# SafetyDocs — Backend API
+# SCE — Backend API
 ## Documentazione Sicurezza Cantieri Edili — D.Lgs. 81/2008
 
 ---

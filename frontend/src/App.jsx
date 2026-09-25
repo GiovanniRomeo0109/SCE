@@ -1,4 +1,4 @@
-import { useState, useContext, createContext } from 'react';
+import { useState, useContext, createContext, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -25,11 +25,16 @@ export const useNotify = () => useContext(NotifyContext);
 export default function App() {
   const [notify, setNotify] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('sce_token'));
+  const timerNotify = useRef(null);
 
+  // Un solo timer alla volta: un nuovo messaggio annulla quello del precedente (prima il timer di un
+  // messaggio vecchio poteva cancellare subito quello nuovo). Gli errori restano visibili più a lungo.
   const showNotify = (msg, type = 'info') => {
-    setNotify({ msg, type });
-    setTimeout(() => setNotify(null), 3500);
+    clearTimeout(timerNotify.current);
+    setNotify({ msg, type, id: Date.now() });
+    timerNotify.current = setTimeout(() => setNotify(null), type === 'error' ? 6000 : 3500);
   };
+  const chiudiNotify = () => { clearTimeout(timerNotify.current); setNotify(null); };
 
   const handleLogin = (data) => {
     localStorage.setItem('sce_token', data.access_token);
@@ -65,7 +70,7 @@ export default function App() {
     <NotifyContext.Provider value={showNotify}>
       <BrowserRouter>
         {notify && (
-          <Notification message={notify.msg} type={notify.type} onClose={() => setNotify(null)} />
+          <Notification key={notify.id} message={notify.msg} type={notify.type} onClose={chiudiNotify} />
         )}
         <div className="app-layout">
           <Sidebar onLogout={handleLogout} />
